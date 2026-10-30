@@ -1,0 +1,26 @@
+# ORIDE — configuración para Apache (IONOS).
+Options -Indexes
+DirectoryIndex index.php
+
+# Carpetas y ficheros privados: nunca accesibles desde la web.
+RedirectMatch 404 ^/(.*/)?(includes|lib|sql|storage|tests)(/|$)
+RedirectMatch 404 ^/(.*/)?(config|config\.sample)\.php$
+RedirectMatch 404 ^/(.*/)?\.(git|env|htaccess)
+<FilesMatch "\.(md|sql|log|lock|dat|ttf)$">
+  Require all denied
+</FilesMatch>
+
+# HTTPS obligatorio (descomenta cuando el certificado SSL esté activo en IONOS).
+# RewriteEngine On
+# RewriteCond %{HTTPS} !=on
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+<IfModule mod_php.c>
+  php_value upload_max_filesize 12M
+  php_value post_max_size 14M
+  php_flag display_errors off
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+</IfModule>

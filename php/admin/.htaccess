@@ -1,0 +1,2 @@
+# El acceso se controla en PHP (require_admin). Sin listados de directorio.
+Options -Indexes

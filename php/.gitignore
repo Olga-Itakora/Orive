@@ -1,0 +1,7 @@
+# Datos locales de cada instalación: nunca al repositorio.
+/config.php
+/storage/instalado.lock
+/storage/evidencias/*
+!/storage/evidencias/.gitkeep
+/storage/logs/*
+!/storage/logs/.gitkeep
