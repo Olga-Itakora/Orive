@@ -1,0 +1,670 @@
+// ORIVA — modelo de datos relacional (PostgreSQL).
+// Ver DATA_MODEL.md para la descripción de cada entidad y sus invariantes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identidad y acceso
+// ---------------------------------------------------------------------------
+
+enum Role {
+  AUTHOR
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(AUTHOR)
+  locale       String    @default("es")
+  disabledAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  profile        CreatorProfile?
+  sessions       Session[]
+  resetTokens    PasswordResetToken[]
+  works          Work[]
+  declarations   Declaration[]
+  acceptances    DeclarationAcceptance[]
+  auditLogs      AuditLog[]
+  publications   DeclarationPublication[]
+  contributorIn  WorkContributor[]
+}
+
+model Session {
+  /// SHA-256 del token de sesión; el token en claro solo existe en la cookie.
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  /// SHA-256 del token.
+  id        String    @id
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model CreatorProfile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Nombre profesional (identidad declarante).
+  displayName  String
+  artisticName String?
+  organization String?
+  bio          String?
+  website      String?
+  /// Preparado para integración futura con ORCID (no implementada).
+  orcid        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model RateLimit {
+  key         String   @id
+  windowStart DateTime
+  count       Int
+}
+
+// ---------------------------------------------------------------------------
+// Obras
+// ---------------------------------------------------------------------------
+
+model WorkCategory {
+  key         String  @id
+  labelEs     String
+  labelEn     String
+  group       String
+  /// Ejemplos de fases adaptados a la modalidad (JSON: { PHASE: "ejemplo" }).
+  phaseHints  Json    @default("{}")
+  sortOrder   Int     @default(0)
+  active      Boolean @default(true)
+  works       Work[]
+}
+
+enum WorkStatus {
+  IN_PROGRESS
+  FINISHED
+  PUBLISHED
+}
+
+model Work {
+  id               String       @id @default(cuid())
+  ownerId          String
+  owner            User         @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  title            String
+  subtitle         String?
+  categoryKey      String
+  category         WorkCategory @relation(fields: [categoryKey], references: [key])
+  description      String?
+  creationPeriod   String?
+  status           WorkStatus   @default(IN_PROGRESS)
+  publicationDate  DateTime?    @db.Date
+  language         String?
+  workVersion      String?
+  publisher        String?
+  identifierType   String?
+  identifier       String?
+  url              String?
+  isCollective     Boolean      @default(false)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  components   WorkComponent[]
+  contributors WorkContributor[]
+  declarations Declaration[]
+
+  @@index([ownerId])
+}
+
+enum ComponentKind {
+  TEXT
+  IMAGE
+  AUDIO
+  VIDEO
+  CODE
+  INTERACTIVE
+  OTHER
+}
+
+model WorkComponent {
+  id          String        @id @default(cuid())
+  workId      String
+  work        Work          @relation(fields: [workId], references: [id], onDelete: Cascade)
+  name        String
+  kind        ComponentKind
+  description String?
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+
+  aiUses AIUse[]
+
+  @@index([workId])
+}
+
+model WorkContributor {
+  id          String   @id @default(cuid())
+  workId      String
+  work        Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+  /// Si el colaborador tiene cuenta en ORIVA (preparado para declaraciones colectivas futuras).
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name        String
+  role        String
+  /// Componentes a los que contribuye (ids de WorkComponent).
+  componentIds String[] @default([])
+  createdAt   DateTime @default(now())
+
+  @@index([workId])
+}
+
+// ---------------------------------------------------------------------------
+// Declaraciones
+// ---------------------------------------------------------------------------
+
+/// Contenedor lógico de las versiones de una declaración sobre una obra.
+model Declaration {
+  id        String   @id @default(cuid())
+  workId    String
+  work      Work     @relation(fields: [workId], references: [id], onDelete: Restrict)
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions DeclarationVersion[]
+
+  @@index([ownerId])
+  @@index([workId])
+}
+
+enum DocumentStatus {
+  DRAFT
+  ISSUED
+  SUPERSEDED
+  REVOKED
+}
+
+enum Visibility {
+  PRIVATE
+  PUBLIC
+  WITHDRAWN
+}
+
+enum DeclarationScope {
+  WHOLE_WORK
+  COMPONENTS
+  OWN_CONTRIBUTION
+}
+
+enum AIUsageAnswer {
+  NO
+  YES
+  UNCERTAIN
+  OWN_CONTRIBUTION_ONLY
+}
+
+model DeclarationVersion {
+  id                    String            @id @default(cuid())
+  declarationId         String
+  declaration           Declaration       @relation(fields: [declarationId], references: [id], onDelete: Restrict)
+  versionNumber         Int
+  /// Identificador documental público y no predecible (ORV-XXXX-XXXX-XXXX). Se asigna al emitir.
+  publicId              String?           @unique
+  status                DocumentStatus    @default(DRAFT)
+  visibility            Visibility        @default(PRIVATE)
+
+  // --- Respuestas del cuestionario (borrador) ---
+  declarantName         String?
+  declarantArtisticName String?
+  declarantOrganization String?
+  declarantRole         String?
+  scope                 DeclarationScope?
+  scopeComponentIds     String[]          @default([])
+  responsibilityNote    String?
+  aiUsage               AIUsageAnswer?
+  ownContributionAiUsage AIUsageAnswer?
+  uncertaintyNote       String?
+  processNarrative      String?
+  observations          String?
+  article50Answers      Json?
+  lastStep              String?
+
+  questionnaireVersionId String
+  questionnaireVersion   QuestionnaireVersion @relation(fields: [questionnaireVersionId], references: [id])
+  schemeId               String
+  scheme                 TransparencyScheme   @relation(fields: [schemeId], references: [id])
+
+  // --- Emisión (inmutable una vez emitida) ---
+  issuedAt              DateTime?
+  snapshot              Json?
+  contentHash           String?
+  pdfFull               Bytes?
+  pdfFullHash           String?
+  pdfSummary            Bytes?
+  pdfSummaryHash        String?
+
+  supersedesId          String?           @unique
+  supersedes            DeclarationVersion?  @relation("VersionChain", fields: [supersedesId], references: [id], onDelete: Restrict)
+  supersededBy          DeclarationVersion?  @relation("VersionChain")
+
+  revokedAt             DateTime?
+  revocationReason      String?
+
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  tools        AITool[]
+  uses         AIUse[]
+  evidence     Evidence[]
+  profiles     TransparencyProfile[]
+  acceptance   DeclarationAcceptance?
+  publications DeclarationPublication[]
+  verification VerificationRecord?
+
+  @@unique([declarationId, versionNumber])
+  @@index([status, visibility])
+}
+
+model AITool {
+  id            String             @id @default(cuid())
+  versionId     String
+  version       DeclarationVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  /// false = herramienta desconocida (el usuario no recuerda o no sabe cuál fue).
+  identified    Boolean            @default(true)
+  name          String
+  provider      String?
+  modelVersion  String?
+  systemType    String?
+  purpose       String?
+  usagePeriod   String?
+  sortOrder     Int                @default(0)
+  createdAt     DateTime           @default(now())
+
+  uses AIUse[]
+
+  @@index([versionId])
+}
+
+enum IncorporationAnswer {
+  NONE
+  INCORPORATED
+  UNKNOWN
+}
+
+model AIUse {
+  id                  String             @id @default(cuid())
+  versionId           String
+  version             DeclarationVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  componentId         String?
+  component           WorkComponent?     @relation(fields: [componentId], references: [id], onDelete: Restrict)
+  toolId              String?
+  tool                AITool?            @relation(fields: [toolId], references: [id], onDelete: SetNull)
+  /// Subusos: un uso con resultados heterogéneos puede dividirse.
+  parentUseId         String?
+  parentUse           AIUse?             @relation("SubUses", fields: [parentUseId], references: [id], onDelete: Cascade)
+  subUses             AIUse[]            @relation("SubUses")
+  title               String
+  /// Funciones A (A1..A5) seleccionadas.
+  functions           String[]           @default([])
+  /// Función principal o "NONE".
+  primaryFunction     String?
+  objective           String?
+  activityDescription String?
+  resultDescription   String?
+  incorporation       IncorporationAnswer?
+  sortOrder           Int                @default(0)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  phases        AIUsagePhase[]
+  contributions CreativeContribution[]
+  evidence      Evidence[]
+  profiles      TransparencyProfile[]
+
+  @@index([versionId])
+}
+
+model AIUsagePhase {
+  id      String @id @default(cuid())
+  useId   String
+  use     AIUse  @relation(fields: [useId], references: [id], onDelete: Cascade)
+  phase   String
+  note    String?
+
+  @@unique([useId, phase])
+}
+
+/// Pareja B–C de un uso: qué se incorporó (B) y qué hizo la persona con ello (C).
+/// Conservar la pareja permite reconstruir siempre la relación original.
+model CreativeContribution {
+  id                          String  @id @default(cuid())
+  useId                       String
+  use                         AIUse   @relation(fields: [useId], references: [id], onDelete: Cascade)
+  /// B1 | B2 | B3
+  contributionType            String
+  /// Respuesta original: ACCEPTED | MINOR_EDITS | TRANSFORMED | OWN_EXPRESSION | UNSURE
+  interventionAnswer          String?
+  /// YES | NO | UNSURE (solo para TRANSFORMED)
+  retainsRecognizableElements String?
+  /// C derivado por el motor (C1..C5) o null si no se pudo determinar.
+  interventionCode            String?
+  interventionDescription     String?
+
+  @@unique([useId, contributionType])
+}
+
+enum EvidenceKind {
+  VERSION_HISTORY
+  CONVERSATION_LOG
+  WORK_MATERIAL
+  SCREENSHOT
+  OTHER
+}
+
+model Evidence {
+  id            String             @id @default(cuid())
+  versionId     String
+  version       DeclarationVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  /// null = evidencia de la declaración completa.
+  useId         String?
+  use           AIUse?             @relation(fields: [useId], references: [id], onDelete: SetNull)
+  kind          EvidenceKind
+  description   String
+  fileName      String?
+  mimeType      String?
+  sizeBytes     Int?
+  sha256        String?
+  /// Clave de almacenamiento (nunca una ruta pública).
+  storageKey    String?
+  createdAt     DateTime           @default(now())
+
+  @@index([versionId])
+}
+
+// ---------------------------------------------------------------------------
+// Taxonomía ORIVA Code (gobernanza, versionada)
+// ---------------------------------------------------------------------------
+
+enum SchemeStatus {
+  DRAFT
+  PUBLISHED
+  DEPRECATED
+}
+
+model TransparencyScheme {
+  id          String       @id @default(cuid())
+  slug        String
+  version     String
+  name        String
+  status      SchemeStatus @default(DRAFT)
+  publishedAt DateTime?
+  /// Especificación completa congelada (JSON) para interpretar declaraciones históricas.
+  spec        Json
+  createdAt   DateTime     @default(now())
+
+  dimensions             TransparencyDimension[]
+  rules                  TransparencyRule[]
+  declarationVersions    DeclarationVersion[]
+  questionnaireVersions  QuestionnaireVersion[]
+
+  @@unique([slug, version])
+}
+
+model TransparencyDimension {
+  id          String             @id @default(cuid())
+  schemeId    String
+  scheme      TransparencyScheme @relation(fields: [schemeId], references: [id], onDelete: Restrict)
+  key         String
+  nameEs      String
+  nameEn      String
+  question    String
+  notMeaning  String
+  values      TransparencyValue[]
+
+  @@unique([schemeId, key])
+}
+
+model TransparencyValue {
+  id           String                @id @default(cuid())
+  dimensionId  String
+  dimension    TransparencyDimension @relation(fields: [dimensionId], references: [id], onDelete: Restrict)
+  code         String
+  labelEs      String
+  labelEn      String
+  descriptionEs String
+  descriptionEn String
+  exampleEs    String?
+
+  @@unique([dimensionId, code])
+}
+
+enum RuleKind {
+  DERIVATION
+  VALIDATION
+  COMPATIBILITY_WARNING
+  DOCUMENTATION
+  AGGREGATION
+}
+
+model TransparencyRule {
+  id          String             @id @default(cuid())
+  schemeId    String
+  scheme      TransparencyScheme @relation(fields: [schemeId], references: [id], onDelete: Restrict)
+  ruleKey     String
+  kind        RuleKind
+  description String
+
+  @@unique([schemeId, ruleKey])
+}
+
+enum ProfileScope {
+  USE
+  COMPONENT
+  WORK
+}
+
+/// Resultado calculado de la clasificación. Para versiones emitidas, es inmutable.
+model TransparencyProfile {
+  id                String             @id @default(cuid())
+  versionId         String
+  version           DeclarationVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  scope             ProfileScope
+  useId             String?
+  use               AIUse?             @relation(fields: [useId], references: [id], onDelete: Cascade)
+  componentId       String?
+  status            String
+  code              String?
+  notation          String?
+  functions         String[]           @default([])
+  /// Parejas B–C: [{ contributionRef, b, c }]
+  pairs             Json               @default("[]")
+  documentation     String
+  rulesApplied      String[]           @default([])
+  /// Entradas usadas por el motor (respuestas estructuradas), para reproducibilidad.
+  inputs            Json
+  schemeVersion     String
+  computedAt        DateTime           @default(now())
+
+  @@index([versionId])
+}
+
+model QuestionnaireVersion {
+  id          String             @id @default(cuid())
+  version     String             @unique
+  schemeId    String
+  scheme      TransparencyScheme @relation(fields: [schemeId], references: [id])
+  definition  Json
+  active      Boolean            @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime           @default(now())
+
+  declarationVersions DeclarationVersion[]
+}
+
+// ---------------------------------------------------------------------------
+// Aceptación, publicación y verificación
+// ---------------------------------------------------------------------------
+
+model DeclarationAcceptance {
+  id               String             @id @default(cuid())
+  versionId        String             @unique
+  version          DeclarationVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  userId           String
+  user             User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  legalTextId      String
+  legalText        LegalText          @relation(fields: [legalTextId], references: [id])
+  /// SHA-256 del texto exacto aceptado.
+  statementHash    String
+  acceptedAt       DateTime           @default(now())
+  /// Huella (HMAC) de la sesión utilizada, sin almacenar el token.
+  sessionFingerprint String
+  /// Huella (HMAC) de la IP; nunca la IP en claro.
+  ipFingerprint    String?
+}
+
+model DeclarationPublication {
+  id            String             @id @default(cuid())
+  versionId     String
+  version       DeclarationVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  actorId       String
+  actor         User               @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action        String             // PUBLISH | UPDATE | WITHDRAW
+  showName      Boolean            @default(false)
+  showWork      Boolean            @default(false)
+  showCode      Boolean            @default(false)
+  showSummary   Boolean            @default(false)
+  showFull      Boolean            @default(false)
+  showEvidence  Boolean            @default(false)
+  evidenceConsentAt DateTime?
+  createdAt     DateTime           @default(now())
+
+  @@index([versionId, createdAt])
+}
+
+model VerificationRecord {
+  id               String             @id @default(cuid())
+  versionId        String             @unique
+  version          DeclarationVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  algorithm        String
+  canonicalization String
+  snapshotFormat   String
+  contentHash      String
+  sectionDigests   Json
+  pdfFullHash      String
+  pdfSummaryHash   String
+  createdAt        DateTime           @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Contenidos legales e informativos, referencias normativas
+// ---------------------------------------------------------------------------
+
+model LegalText {
+  id          String    @id @default(cuid())
+  /// declaration_statement | privacy | terms | legal_notice | disclaimer
+  key         String
+  version     String
+  locale      String    @default("es")
+  title       String
+  content     String
+  contentHash String
+  active      Boolean   @default(false)
+  /// Indica que requiere revisión jurídica profesional.
+  pendingLegalReview Boolean @default(true)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  acceptances DeclarationAcceptance[]
+
+  @@unique([key, version, locale])
+}
+
+model LegalReference {
+  id               String    @id @default(cuid())
+  key              String    @unique
+  title            String
+  citation         String
+  url              String
+  applicableFrom   DateTime? @db.Date
+  summary          String
+  verificationNote String?
+  active           Boolean   @default(true)
+  updatedAt        DateTime  @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Incidencias, solicitudes de derechos y auditoría
+// ---------------------------------------------------------------------------
+
+enum IncidentType {
+  CONTACT
+  CONTENT_REPORT
+  TECHNICAL
+  DATA_ACCESS
+  DATA_RECTIFICATION
+  DATA_ERASURE
+  DATA_OBJECTION
+  DATA_PORTABILITY
+  DATA_RESTRICTION
+}
+
+enum IncidentStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+model Incident {
+  id            String         @id @default(cuid())
+  type          IncidentType
+  status        IncidentStatus @default(OPEN)
+  name          String?
+  email         String
+  /// Identificador público de la declaración afectada, si procede.
+  publicId      String?
+  userId        String?
+  message       String
+  resolution    String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  resolvedAt    DateTime?
+
+  @@index([status, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json     @default("{}")
+  ipFingerprint String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

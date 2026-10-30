@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, monospace;
+
+  --color-paper: #faf8f4;
+  --color-surface: #ffffff;
+  --color-ink: #1c2526;
+  --color-muted: #5b6b6c;
+  --color-subtle: #8a9798;
+  --color-line: #e3e8e6;
+  --color-line-strong: #c9d3d1;
+
+  --color-petrol-50: #eef6f5;
+  --color-petrol-100: #d5e9e7;
+  --color-petrol-200: #a9d2cd;
+  --color-petrol-600: #1b5a5b;
+  --color-petrol-700: #154849;
+  --color-petrol-800: #0e3b3c;
+  --color-petrol-900: #0a2b2c;
+
+  --color-accent: #2ba39a;
+  --color-accent-soft: #e2f4f1;
+
+  --color-warn: #8a5a00;
+  --color-warn-soft: #fdf4e1;
+  --color-danger: #a3261f;
+  --color-danger-soft: #fbeceb;
+  --color-ok: #1f6b45;
+  --color-ok-soft: #e7f4ec;
+
+  /* Interlineado: cuerpo 1.5; títulos 1.1–1.25 (decrece con el tamaño). */
+  --text-xs--line-height: 1.4;
+  --text-sm--line-height: 1.5;
+  --text-base--line-height: 1.5;
+  --text-lg--line-height: 1.5;
+  --text-xl--line-height: 1.25;
+  --text-2xl--line-height: 1.25;
+  --text-3xl--line-height: 1.2;
+  --text-4xl--line-height: 1.15;
+  --text-5xl--line-height: 1.1;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-feature-settings: "cv11", "ss01";
+    text-rendering: optimizeLegibility;
+  }
+  /* Un único tono de acento interactivo (petróleo) para enlaces, botones y foco. */
+  :focus-visible {
+    outline: 2px solid var(--color-petrol-600);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  /* Máximo tres pesos (400/500/600): los valores por defecto del navegador serían 700. */
+  strong,
+  b,
+  th {
+    font-weight: 600;
+  }
+  ::selection {
+    background: var(--color-petrol-100);
+  }
+}
+
+@layer components {
+  .prose-oriva {
+    max-width: 68ch;
+    line-height: 1.6;
+  }
+  .prose-oriva h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-petrol-800);
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .prose-oriva h3 {
+    font-weight: 600;
+    margin-top: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+  .prose-oriva p,
+  .prose-oriva ul,
+  .prose-oriva ol {
+    margin-bottom: 0.85rem;
+    color: var(--color-ink);
+  }
+  .prose-oriva ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+  .prose-oriva ol {
+    list-style: decimal;
+    padding-left: 1.25rem;
+  }
+  .prose-oriva a {
+    color: var(--color-petrol-700);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
