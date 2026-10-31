@@ -21,6 +21,7 @@ $siteCode = oride_explain('IA1-I2-C44-V1')['result'];
   </ul>
 
   <h2><?= h(tr('El Código ORIDE de este sitio', 'This site’s ORIDE Code')) ?></h2>
+  <p><?= h(tr('El código ORIDE de este sitio web es', 'The ORIDE code of this website is')) ?> <b class="mono">ORIDE IA1-I2-C44-V1</b>.</p>
   <?= code_box($siteCode, false, t('code_label')) ?>
   <?= honor_note() ?>
   <p><a class="btn btn-secondary" href="<?= u('mejora.php') ?>"><?= h(t('nav_feedback')) ?></a></p>
