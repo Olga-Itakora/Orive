@@ -1,0 +1,16 @@
+# ORIDE v2 — Apache (IONOS)
+Options -Indexes
+DirectoryIndex index.php
+
+# Carpetas y ficheros privados.
+RedirectMatch 404 ^/(.*/)?(includes|storage|tests)(/|$)
+RedirectMatch 404 ^/(.*/)?config(\.local)?\.php$
+RedirectMatch 404 ^/(.*/)?\.(git|htaccess)
+<FilesMatch "\.(md|log)$">
+  Require all denied
+</FilesMatch>
+
+# HTTPS obligatorio (quita el # de las tres líneas cuando el certificado SSL esté activo).
+# RewriteEngine On
+# RewriteCond %{HTTPS} !=on
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
