@@ -52,8 +52,8 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.screenshot({ path: out + '/01-crear.png', fullPage: true });
 
   // Cambio de tipo: las actividades de otro tipo no se arrastran
-  await page.check('input[name=type][value=SOF]');
-  ok('al cambiar de tipo, el código se adapta', (await code()) === 'SOF-IA1-V1', await code());
+  await page.check('input[name=type][value=SW]');
+  ok('al cambiar de tipo, el código se adapta', (await code()) === 'SW-IA1-V1', await code());
   await page.check('input[name=type][value=LIT]');
 
   // Sin JavaScript y navegador = servidor
@@ -61,7 +61,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   const nojs = await newPage({ javaScriptEnabled: false });
   await nojs.goto(shared);
   ok('sin JavaScript el servidor da el mismo código', (await code(nojs)) === 'LIT-IA1-DOC44-GEN24-V1', await code(nojs));
-  const types = { SCI: ['DOC', 'HIP', 'MET', 'DAT', 'ANA', 'INT', 'RED', 'REV', 'FOR'], MUS: ['IDE', 'COM', 'ARR', 'GEN', 'INT', 'MIX', 'MAS', 'RES'], PHO: ['PLA', 'CAP', 'REV', 'RET', 'MOD', 'GEN', 'REC'], ILU: ['REF', 'IDE', 'COM', 'GEN', 'TRA', 'RET', 'AMP', 'VAR', 'REV', 'FIN'], AUD: ['GUI', 'STO', 'GEN', 'VOZ', 'MON', 'EFX', 'DOB', 'POS'], TRA: ['DOC', 'INT', 'GEN', 'ADA', 'REV', 'STY', 'LOC', 'VAL'] };
+  const types = { SCI: ['DOC', 'HIP', 'MET', 'DAT', 'ANA', 'INT', 'RED', 'REV', 'FOR'], MUS: ['IDE', 'COM', 'ARR', 'GEN', 'INT', 'MIX', 'MAS', 'RES'], PHO: ['PLA', 'CAP', 'REV', 'RET', 'MOD', 'GEN', 'REC'], IL: ['REF', 'IDE', 'COM', 'GEN', 'TRA', 'RET', 'AMP', 'VAR', 'REV', 'FIN'], AUD: ['GUI', 'STO', 'GEN', 'VOZ', 'MON', 'EFX', 'DOB', 'POS'], TRA: ['DOC', 'INT', 'GEN', 'ADA', 'REV', 'STY', 'LOC', 'VAL'] };
   let same = 0, n = 50;
   for (let i = 0; i < n; i++) {
     const t = Object.keys(types)[i % 6];
@@ -108,7 +108,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   const about = await page.locator('main').innerText();
   ok('Sobre: nacimiento del código', about.includes('creación literaria, de software y de investigación científica') && about.includes('comunidad de creadores'));
   const foot = await page.locator('footer').innerText();
-  ok('pie con copyright y marca', /© 20\d\d Olga Revilla Muñoz/.test(foot) && foot.includes('ORIDE Code es una marca registrada') && foot.includes('centros de investigación públicos'));
+  ok('pie con copyright y marca', /© 20\d\d Olga Revilla Muñoz/.test(foot) && foot.includes('ORIDE Code™ es una marca en trámite de registro') && foot.includes('centros de investigación públicos'));
   await page.goto(B + 'preguntas.php');
   ok('FAQ: no equivale a cumplir el art. 50', (await page.locator('main').textContent()).includes('no equivale a cumplir el artículo 50'));
   ok('menú con Instituciones', await page.isVisible('header >> text=Instituciones'));
@@ -149,13 +149,13 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
 
   // Móvil
   const mob = await newPage({ viewport: { width: 375, height: 800 } });
-  for (const p of ['', 'crear.php?type=ILU&ia=si&ev=si&acts_ILU[]=GEN&u_ILU_GEN=3&s_ILU_GEN=2', 'codigo.php', 'instituciones.php', 'oride.php?ILU-IA1-GEN32-V1', 'sobre.php']) {
+  for (const p of ['', 'crear.php?type=IL&ia=si&ev=si&acts_IL[]=GEN&u_IL_GEN=3&s_IL_GEN=2', 'codigo.php', 'instituciones.php', 'oride.php?IL-IA1-GEN32-V1', 'sobre.php']) {
     await mob.goto(B + p);
     const sw = await mob.evaluate(() => document.documentElement.scrollWidth);
     if (sw > 375) ok('móvil sin desbordar: ' + (p || 'inicio'), false, sw + 'px');
   }
   ok('móvil revisado', true);
-  await mob.goto(B + 'crear.php?type=ILU&ia=si&ev=si&acts_ILU[]=GEN&u_ILU_GEN=3&s_ILU_GEN=2');
+  await mob.goto(B + 'crear.php?type=IL&ia=si&ev=si&acts_IL[]=GEN&u_IL_GEN=3&s_IL_GEN=2');
   await mob.screenshot({ path: out + '/04-movil.png', fullPage: true });
 
   ok('sin errores de JavaScript', errors.length === 0, errors.join(' | '));

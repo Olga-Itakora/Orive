@@ -16,7 +16,7 @@ $code = fn(array $in) => oride_compute($in)['code'];
 $lit = fn(array $acts, array $u, array $s = [], string $ev = '') => ['type' => 'LIT', 'ia' => 'si', 'acts' => $acts, 'u' => $u, 's' => $s, 'ev' => $ev];
 
 echo "Taxonomía\n";
-check('nueve tipos de obra con los códigos pedidos', array_keys(WORK_TYPES) === ['SCI', 'LIT', 'MUS', 'PHO', 'ILU', 'DES', 'AUD', 'SOF', 'TRA']);
+check('nueve tipos de obra con los códigos pedidos', array_keys(WORK_TYPES) === ['SCI', 'LIT', 'MUS', 'PHO', 'IL', 'DES', 'AUD', 'SW', 'TRA']);
 check('70 actividades, como en la hoja Excel', array_sum(array_map(fn($t) => count($t['acts']), WORK_TYPES)) === 70);
 check('códigos de actividad de tres letras', !array_filter(WORK_TYPES, fn($t) => array_filter(array_keys($t['acts']), fn($a) => !preg_match('/^[A-Z]{3}$/', $a))));
 check('cada actividad con nombre y descripción en los dos idiomas', !array_filter(WORK_TYPES, fn($t) => array_filter($t['acts'], fn($a) => count(array_filter($a, fn($x) => trim($x) !== '')) !== 4)));
@@ -37,7 +37,7 @@ check('alcance ignorado con grado 1', $code($lit(['GEN'], ['GEN' => '1'], ['GEN'
 check('actividades en el orden del tipo', $code($lit(['FOR', 'DOC'], ['FOR' => '5', 'DOC' => '4'], ['FOR' => '0', 'DOC' => '4'], 'si')) === 'LIT-IA1-DOC44-FOR50-V1');
 check('actividad de otro tipo se ignora', $code($lit(['COD'], ['COD' => '5'])) === 'LIT-IA1');
 check('actividad sin grado: pendiente con su nombre', str_contains((string) oride_compute($lit(['EST'], []))['missing'], 'Estructuración'));
-check('todas las actividades tienen dos cifras', (bool) preg_match('/^SOF-IA1(-[A-Z]{3}\d\d)+-V1$/', $code(['type' => 'SOF', 'ia' => 'si', 'acts' => ['REQ', 'COD', 'DOC'], 'u' => ['REQ' => '0', 'COD' => '3', 'DOC' => '1'], 's' => ['COD' => '2'], 'ev' => 'si'])));
+check('todas las actividades tienen dos cifras', (bool) preg_match('/^SW-IA1(-[A-Z]{3}\d\d)+-V1$/', $code(['type' => 'SW', 'ia' => 'si', 'acts' => ['REQ', 'COD', 'DOC'], 'u' => ['REQ' => '0', 'COD' => '3', 'DOC' => '1'], 's' => ['COD' => '2'], 'ev' => 'si'])));
 
 echo "Lectura de códigos (oride.php)\n";
 $x = fn(string $c) => oride_explain($c);
@@ -59,13 +59,18 @@ check('rechaza alcance > 4', !$x('LIT-IA1-DOC45')['valid']);
 check('rechaza segunda cifra distinta de 0 con grado 1', !$x('LIT-IA1-DOC13')['valid']);
 check('rechaza V en medio', !$x('LIT-IA1-V1-DOC44')['valid']);
 
+echo "Cambios de tipos\n";
+check('Diseño se llama solo «Diseño»', WORK_TYPES['DES']['es'] === 'Diseño' && WORK_TYPES['DES']['en'] === 'Design');
+check('tipos de dos letras en enlaces', oride_explain('SW-IA1-COD44-V1')['result']['code'] === 'SW-IA1-COD44-V1' && oride_explain('il:gen32')['result']['code'] === 'IL-IA1-GEN32');
+check('los códigos antiguos SOF e ILU ya no valen', !oride_explain('SOF-IA1')['valid'] && !oride_explain('ILU-IA1')['valid']);
+
 echo "Textos e idioma\n";
 $r = oride_compute($lit(['DOC'], ['DOC' => '4'], ['DOC' => '4'], 'si'));
 $txt = oride_text($r);
 check('texto: código, tipo y actividad', str_starts_with($txt, "Código ORIDE LIT-IA1-DOC44-V1\nTipo de obra: Literatura\n") && str_contains($txt, 'Documentación: Modifiqué parcialmente los resultados. Parte de la obra afectada: del 75% al 100%.'));
 check('texto: enlace que lo explica', str_contains($txt, 'oride.php?LIT-IA1-DOC44-V1&lang=es'));
 check('texto de instituciones', str_starts_with(oride_text($r, t('inst_max')), 'El autor debe garantizar que el uso de la IA que hace no supera el siguiente código:'));
-check('marca registrada', str_contains(t('trademark'), 'ORIDE Code es una marca registrada') && str_contains(t('trademark'), 'centros de investigación públicos'));
+check('marca en trámite', str_contains(t('trademark'), 'ORIDE Code™ es una marca en trámite de registro') && str_contains(t('trademark'), 'centros de investigación públicos'));
 check('por defecto, español', lang() === 'es');
 check('los enlaces llevan el idioma', u('crear.php') === '/crear.php?lang=es' && u('oride.php?LIT-IA0') === '/oride.php?LIT-IA0&lang=es');
 

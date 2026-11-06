@@ -137,7 +137,7 @@ ini_set('display_errors', cfg('debug') ? '1' : '0');
 
 // ---------------------------------------------------------------------------
 // Código ORIDE (v5): TIPO-IA1-ACT##-…-V#
-//   TIPO  tipo de obra (SCI, LIT, MUS, PHO, ILU, DES, AUD, SOF, TRA)
+//   TIPO  tipo de obra (SCI, LIT, MUS, PHO, IL, DES, AUD, SW, TRA)
 //   IA0 / IA1  sin IA / con IA. Con IA0 el código termina ahí.
 //   ACT##  actividad opcional + grado de uso (0–5) + alcance (0–4; 0 con los grados 0 y 1)
 //   V0 / V1  evidencias (opcional, al final)

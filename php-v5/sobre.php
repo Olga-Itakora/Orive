@@ -2,8 +2,8 @@
 declare(strict_types=1);
 require_once __DIR__ . '/includes/app.php';
 
-// Código ORIDE de este sitio web (formato v5). Equivale al anterior IA1-I2-C44-V1 adaptado a software.
-const SITE_CODE = 'SOF-IA1-COD44-V1';
+// Código ORIDE de este sitio web.
+const SITE_CODE = 'SW-IA1-COD44-V1';
 $siteCode = oride_explain(SITE_CODE)['result'];
 
 page_start(t('nav_about'), tr('Quién está detrás de ORIDE, cómo nació y cómo contactar.', 'Who is behind ORIDE, how it started and how to get in touch.'));

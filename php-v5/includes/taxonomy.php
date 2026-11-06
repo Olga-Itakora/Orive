@@ -45,7 +45,7 @@ const WORK_TYPES = [
         'GEN' => ['Generación visual', 'Creación de imágenes completas o componentes visuales sintéticos mediante IA.', 'Visual generation', 'Creating complete images or synthetic visual components with AI.'],
         'REC' => ['Reconstrucción y mejora', 'Ampliación, completado de regiones, recuperación de detalle, reducción de ruido y mejora de resolución.', 'Reconstruction and enhancement', 'Upscaling, filling in regions, recovering detail, noise reduction and resolution enhancement.'],
     ]],
-    'ILU' => ['es' => 'Ilustración', 'en' => 'Illustration', 'acts' => [
+    'IL' => ['es' => 'Ilustración', 'en' => 'Illustration', 'acts' => [
         'REF' => ['Documentación y referencias', 'Exploración de referentes visuales, estilos, materiales, anatomía y otros recursos.', 'Research and references', 'Exploring visual references, styles, materials, anatomy and other resources.'],
         'IDE' => ['Conceptualización', 'Generación de conceptos visuales, personajes, escenarios y alternativas creativas.', 'Concept development', 'Generating visual concepts, characters, settings and creative alternatives.'],
         'COM' => ['Composición y bocetado', 'Elaboración de bocetos, encuadres, distribución de elementos y organización visual.', 'Composition and sketching', 'Making sketches, framing, arranging elements and visual organisation.'],
@@ -57,7 +57,7 @@ const WORK_TYPES = [
         'REV' => ['Revisión visual', 'Evaluación de composición, legibilidad, coherencia estética y adecuación al encargo.', 'Visual review', 'Evaluating composition, readability, aesthetic coherence and fit with the brief.'],
         'FIN' => ['Preparación final', 'Optimización, separación de elementos, preparación de archivos y exportación.', 'Final preparation', 'Optimising, separating elements, preparing files and exporting.'],
     ]],
-    'DES' => ['es' => 'Diseño y artes visuales', 'en' => 'Design and visual arts', 'acts' => [
+    'DES' => ['es' => 'Diseño', 'en' => 'Design', 'acts' => [
         'IDE' => ['Conceptualización', 'Definición de propuestas, conceptos, estilos, soluciones y direcciones creativas.', 'Concept development', 'Defining proposals, concepts, styles, solutions and creative directions.'],
         'VAR' => ['Exploración de alternativas', 'Generación y comparación de variantes de diseño, estilos, colores y configuraciones.', 'Exploring alternatives', 'Generating and comparing design variants, styles, colours and configurations.'],
         'COM' => ['Composición visual', 'Distribución de elementos, jerarquía visual, organización espacial y composición.', 'Visual composition', 'Arranging elements, visual hierarchy, spatial organisation and composition.'],
@@ -76,7 +76,7 @@ const WORK_TYPES = [
         'DOB' => ['Doblaje y subtitulado', 'Traducción, síntesis o adaptación de voces, sincronización labial y creación de subtítulos.', 'Dubbing and subtitling', 'Translating, synthesising or adapting voices, lip-sync and creating subtitles.'],
         'POS' => ['Posproducción', 'Corrección de color, mejora de imagen y sonido, restauración y acabado técnico.', 'Post-production', 'Colour grading, image and sound enhancement, restoration and technical finishing.'],
     ]],
-    'SOF' => ['es' => 'Software y programación', 'en' => 'Software and programming', 'acts' => [
+    'SW' => ['es' => 'Software y programación', 'en' => 'Software and programming', 'acts' => [
         'REQ' => ['Análisis de requisitos', 'Identificación, especificación y organización de funcionalidades, restricciones y necesidades.', 'Requirements analysis', 'Identifying, specifying and organising features, constraints and needs.'],
         'ARQ' => ['Diseño y arquitectura', 'Diseño de componentes, interfaces, estructuras de datos y organización del sistema.', 'Design and architecture', 'Designing components, interfaces, data structures and system organisation.'],
         'COD' => ['Generación de código', 'Producción de funciones, clases, módulos, scripts y otros componentes de software.', 'Code generation', 'Producing functions, classes, modules, scripts and other software components.'],

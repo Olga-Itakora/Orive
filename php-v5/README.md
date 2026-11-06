@@ -33,12 +33,12 @@ Ejemplo: `LIT-IA1-DOC44-GEN24-V1`
 
 | Parte | Significado |
 |---|---|
-| `LIT` | Tipo de obra: SCI, LIT, MUS, PHO, ILU, DES, AUD, SOF, TRA. |
+| `LIT` | Tipo de obra: SCI, LIT, MUS, PHO, IL, DES, AUD, SW, TRA. |
 | `IA0` / `IA1` | Sin IA / con IA. Con el tipo y esto ya hay código (`LIT-IA0`, `LIT-IA1`). Con IA0 el código termina ahí. |
 | `DOC44` | Actividad (opcional, tres letras, propia de cada tipo de obra) + dos cifras: grado de uso (0–5) y alcance (0–4). Con los grados 0 y 1 la segunda cifra es 0: `DOC10`. |
 | `V0` / `V1` | Evidencias (opcional, al final). |
 
-- Tipos de obra y actividades: `includes/taxonomy.php` (fuente: `codigos_oride_2.0.xlsx`; en la hoja, Software es `SW` e Ilustración `ILL`; aquí se usan `SOF` e `ILU`).
+- Tipos de obra y actividades: `includes/taxonomy.php` (fuente: `codigos_oride_2.0.xlsx`; Ilustración usa `IL` en lugar de `ILL`, y «Diseño y artes visuales» se llama «Diseño»).
 - Grados de uso (0–5): no utilicé IA · consulté sin incorporar · creé algo propio usando los resultados como referencia · transformé sustancialmente · modifiqué parcialmente · incorporé prácticamente sin cambios.
 - Alcance (0–4), desde el grado 2: menos del 5% · 5–25% · 25–50% · 50–75% · 75–100%.
 
