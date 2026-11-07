@@ -126,7 +126,7 @@ $txt = oride_text($r);
 check('texto: código en dos líneas, tipo y actividad', str_starts_with($txt, "Código ORIDE LIT-IA1-V1\nDOC44\nTipo de obra: Literatura\n") && str_contains($txt, 'Documentación: Modifiqué parcialmente los resultados. Parte de la obra afectada: del 75% al 100%.'));
 check('texto: enlace que lo explica, con versión del índice', str_contains($txt, 'oride.php?LIT-IA1-V1-DOC44&ig=1.0-experimental&lang=es'));
 check('texto de instituciones', str_starts_with(oride_text($r, t('inst_max')), 'El autor debe garantizar que el uso de la IA que hace no supera el siguiente código:'));
-check('marca en trámite', str_contains(t('trademark'), 'ORIDE Code™ es una marca en trámite de registro') && str_contains(t('trademark'), 'centros de investigación públicos'));
+check('sin nota de marca registrada', !isset(STR['es']['trademark']) && !isset(STR['en']['trademark']));
 check('por defecto, español', lang() === 'es');
 check('los enlaces llevan el idioma', u('crear.php') === '/crear.php?lang=es' && u('oride.php?LIT-IA0-V0') === '/oride.php?LIT-IA0-V0&lang=es');
 check('números con coma decimal', num(52.5) === '52,5' && num(100) === '100' && num_range([3.75, 5.0], 2) === '3,75–5');

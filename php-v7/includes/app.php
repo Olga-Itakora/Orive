@@ -359,7 +359,7 @@ function page_start(string $title, ?string $description = null): void
     header('Content-Language: ' . lang());
     header('Vary: Accept-Language');
     $current = basename($_SERVER['SCRIPT_NAME'] ?? '');
-    $nav = ['como-funciona.php' => t('nav_how'), 'codigo.php' => t('nav_code'), 'instituciones.php' => t('nav_inst'), 'preguntas.php' => t('nav_faq')];
+    $nav = ['como-funciona.php' => t('nav_how'), 'codigo.php' => t('nav_code'), 'instituciones.php' => t('nav_inst'), 'documentacion.php' => t('nav_docs')];
     echo '<!doctype html><html lang="' . lang() . '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">';
     echo '<title>' . h($title === '' ? 'ORIDE · ' . t('descriptor') : $title . ' · ORIDE') . '</title><meta name="description" content="' . h($description ?? t('site_description')) . '">';
     foreach (LANGS as $code => $_) echo '<link rel="alternate" hreflang="' . $code . '" href="' . h(current_in($code)) . '">';
@@ -388,7 +388,7 @@ function page_end(): void
     foreach (['cc', 'by', 'nc', 'nd'] as $i) $icons .= '<img class="cc-icon" src="https://mirrors.creativecommons.org/presskit/icons/' . $i . '.svg" alt="">';
     $license = '<a href="http://oridecode.com">Oride</a> © 2026 ' . tr('de', 'by') . ' <a href="http://itakora.com">Olga Revilla</a> '
         . tr('está bajo la licencia', 'is licensed under') . ' <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/' . (en() ? '' : 'deed.es') . '" rel="license">CC BY-NC-ND 4.0</a>' . $icons;
-    echo '</div><div class="container footer-note"><p class="license">' . $license . '</p><p>' . h(t('trademark')) . '</p><p>' . h(t('no_cookies')) . ' ' . h(t('honor')) . '</p></div></footer></body></html>';
+    echo '</div><div class="container footer-note"><p class="license">' . $license . '</p><p>' . h(t('no_cookies')) . ' ' . h(t('honor')) . '</p></div></footer></body></html>';
 }
 
 function alert(string $msg, string $tone = 'info'): string

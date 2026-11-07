@@ -81,7 +81,8 @@ index.php            Inicio
 crear.php            Crea tu declaración (formulario + código en tiempo real)
 como-funciona.php    Cómo funciona
 codigo.php           Código ORIDE (tablas y explicador)
-preguntas.php        Preguntas frecuentes
+documentacion.php    Documentación: cómo funcionan el código y el índice, y preguntas frecuentes
+preguntas.php        Redirige a documentacion.php#preguntas
 marco-normativo.php  Artículo 50 del Reglamento de IA
 legal.php            Aviso legal y privacidad
 mejora.php           ¿Cómo puede mejorar el Código ORIDE?
@@ -131,4 +132,4 @@ Para probar el formulario de mejora sin enviar correos, crea `config.local.php` 
 
 ## Licencia
 
-Los contenidos del sitio se publican con la licencia [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/). Los iconos de la licencia del pie se cargan desde `mirrors.creativecommons.org` (está permitido en la política de seguridad de contenidos y se indica en el aviso de privacidad). Para servirlos desde el propio sitio, descárgalos en `assets/img/cc/` y cambia la ruta en `page_end()`.
+ORIDE no es una marca registrada. El Código ORIDE, su metodología y los contenidos del sitio son © 2026 Olga Revilla y se publican con la licencia [CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/). Los iconos de la licencia del pie se cargan desde `mirrors.creativecommons.org` (está permitido en la política de seguridad de contenidos y se indica en el aviso de privacidad). Para servirlos desde el propio sitio, descárgalos en `assets/img/cc/` y cambia la ruta en `page_end()`.

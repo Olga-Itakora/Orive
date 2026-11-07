@@ -547,3 +547,12 @@ main > .band:last-child { margin-bottom: -64px; }
 .factor-table th, .factor-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
 .factor-table td.n { font-family: var(--mono); white-space: nowrap; }
 .formula { font-family: var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; overflow-x: auto; }
+
+/* Documentación */
+.toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 8px; }
+.toc a { display: inline-flex; min-height: 44px; align-items: center; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 999px; color: var(--petrol-800); text-decoration: none; font-size: 0.875rem; background: var(--surface); }
+.toc a:hover { background: var(--petrol-50); }
+.docs section { scroll-margin-top: 16px; }
+.docs section + section { margin-top: 40px; }
+.factor-table caption { text-align: left; font-weight: 500; font-size: 0.875rem; padding: 4px 0; color: var(--petrol-900); }
+.code-example { font-size: 1.25rem; }

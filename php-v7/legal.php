@@ -17,7 +17,7 @@ page_start(t('nav_legal'), tr('Responsable, datos personales y cookies.', 'Contr
     <p>This site does not use cookies or store any information in your browser.</p>
     <p>The Creative Commons licence icons in the footer are loaded from creativecommons.org, so your browser connects to that site to display them.</p>
     <h2>Licence</h2>
-    <p>The contents of this site are published under the <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license">CC BY-NC-ND 4.0</a> licence. <?= h(t('trademark')) ?></p>
+    <p>ORIDE is not a registered trademark. The ORIDE Code, its methodology and the contents of this site are © 2026 Olga Revilla and are published under the <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" rel="license">CC BY-NC-ND 4.0</a> licence.</p>
     <h2>Hosting</h2>
     <p>The site is hosted by IONOS, which acts as technical provider.</p>
     <h2>Responsibility</h2>
@@ -33,7 +33,7 @@ page_start(t('nav_legal'), tr('Responsable, datos personales y cookies.', 'Contr
     <p>Este sitio no usa cookies ni guarda información en tu navegador.</p>
     <p>Los iconos de la licencia Creative Commons del pie de página se cargan desde creativecommons.org, por lo que tu navegador se conecta a ese sitio para mostrarlos.</p>
     <h2>Licencia</h2>
-    <p>Los contenidos de este sitio se publican con la licencia <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es" rel="license">CC BY-NC-ND 4.0</a>. <?= h(t('trademark')) ?></p>
+    <p>ORIDE no es una marca registrada. El Código ORIDE, su metodología y los contenidos de este sitio son © 2026 Olga Revilla y se publican con la licencia <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es" rel="license">CC BY-NC-ND 4.0</a>.</p>
     <h2>Alojamiento</h2>
     <p>El sitio está alojado en IONOS, que actúa como proveedor técnico.</p>
     <h2>Responsabilidad</h2>

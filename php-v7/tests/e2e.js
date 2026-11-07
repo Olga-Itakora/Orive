@@ -141,9 +141,16 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   ok('pie con la licencia CC BY-NC-ND 4.0', (await page.locator('footer .license').textContent()).replace(/\s+/g, ' ').includes('Oride © 2026 de Olga Revilla está bajo la licencia CC BY-NC-ND 4.0') && await page.locator('footer a[href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es"]').count() === 1 && await page.locator('footer img.cc-icon').count() === 4);
   ok('pie sin estilos en línea (CSP)', (await page.locator('footer [style]').count()) === 0);
   await page.goto(B + 'preguntas.php');
+  ok('la dirección antigua de las preguntas lleva a Documentación', page.url().includes('documentacion.php') && (await page.locator('h1').innerText()) === 'Documentación');
   const faq = await page.locator('main').textContent();
-  ok('FAQ: licencia, qué permite y qué no', faq.includes('Reconocimiento-NoComercial-SinObraDerivada') && faq.includes('Permite copiarlos y compartirlos') && faq.includes('No permite distribuir versiones modificadas'));
-  ok('FAQ: Índice Global ORIDE', faq.includes('¿Qué es el Índice Global ORIDE?'));
+  ok('Documentación: primero cómo funcionan el código y el índice', faq.indexOf('Cómo funciona el Código ORIDE') < faq.indexOf('Cómo funciona el Índice Global ORIDE') && faq.indexOf('Cómo funciona el Índice Global ORIDE') < faq.indexOf('¿Qué es el Código ORIDE?'));
+  ok('FAQ: ¿Qué es el Código ORIDE? con definición breve', faq.includes('Una declaración de originalidad'));
+  ok('FAQ: ¿Quién puede usar ORIDE? (autores e instituciones)', faq.includes('¿Quién puede usar ORIDE?') && faq.includes('exigir un mínimo de originalidad'));
+  ok('FAQ: pesos de las actividades', faq.includes('¿Todas las actividades tienen el mismo peso') && faq.includes('Generar contenido con IA pesa mucho más'));
+  ok('FAQ: ¿El código o el índice certifican algo?', faq.includes('¿El código o el índice certifican algo?') && !faq.includes('¿El código certifica algo?'));
+  ok('FAQ: licencia, sin marca registrada', faq.includes('ORIDE no es una marca registrada') && faq.includes('Reconocimiento-NoComercial-SinObraDerivada') && faq.includes('No puedes distribuir versiones modificadas') && await page.locator('main a[href*="creativecommons.org/licenses/by-nc-nd/4.0"]').count() >= 1);
+  ok('ninguna mención a la marca en trámite', !(await page.locator('body').textContent()).includes('trámite de registro'));
+  ok('menú con Documentación', await page.isVisible('header >> text=Documentación'));
 
   // Copiar sin HTTPS
   const insecure = await newPage();
@@ -165,7 +172,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   ok('inglés: código e índice', (await code(enp)) === 'TRA-IA1-V0GEN54' && (await enp.locator('.ig-head').textContent()).includes('ORIDE Global Index'));
   await enp.click('[data-lang-switch]');
   ok('cambio de idioma conserva el código', (await code(enp)) === 'TRA-IA1-V0GEN54' && (await enp.getAttribute('html', 'lang')) === 'es');
-  for (const pg of ['', 'como-funciona.php', 'codigo.php', 'instituciones.php', 'preguntas.php', 'sobre.php', 'legal.php', 'marco-normativo.php', 'mejora.php', 'indice.php', 'oride.php?LIT-IA1-V1-DOC44', 'crear.php?type=LIT&ia=si&ev=si&acts_LIT[]=GEN&u_LIT_GEN=4&s_LIT_GEN=2']) {
+  for (const pg of ['', 'como-funciona.php', 'codigo.php', 'instituciones.php', 'documentacion.php', 'sobre.php', 'legal.php', 'marco-normativo.php', 'mejora.php', 'indice.php', 'oride.php?LIT-IA1-V1-DOC44', 'crear.php?type=LIT&ia=si&ev=si&acts_LIT[]=GEN&u_LIT_GEN=4&s_LIT_GEN=2']) {
     await enp.goto(B + pg + (pg.includes('?') ? '&' : '?') + 'lang=en');
     const t = await enp.locator('body').innerText();
     const m = t.match(/.{0,30}([¿¡]|ción\b|Código ORIDE|Crea tu|Sí\b|Obra de tipo|Índice).{0,30}/);

@@ -37,7 +37,6 @@ page_start(t('nav_about'), tr('Quién está detrás de ORIDE, cómo nació y có
   <p><?= h(tr('El código ORIDE de este sitio web es', 'The ORIDE code of this website is')) ?> <a class="mono" href="<?= u('oride.php?' . SITE_CODE) ?>">ORIDE <?= implode(' / ', $siteCode['lines']) ?></a>.</p>
   <?= code_box($siteCode, ['title' => t('code_label')]) ?>
   <?= honor_note() ?>
-  <p class="small muted"><?= h(t('trademark')) ?></p>
   <p><a class="btn btn-secondary" href="<?= u('mejora.php') ?>"><?= h(t('nav_feedback')) ?></a></p>
 </div>
 <?php page_end();
