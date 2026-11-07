@@ -87,7 +87,7 @@ preguntas.php        Redirige a documentacion.php#preguntas
 marco-normativo.php  Redirige a documentacion.php#preguntas (el artículo 50 está en las preguntas)
 comprobar.php        Instituciones › Verificar una entrega
 legal.php            Aviso legal y privacidad
-mejora.php           ¿Cómo puede mejorar el Código ORIDE?
+mejora.php           Contacto
 sobre.php            Sobre este sitio
 instituciones.php    Instituciones (uso máximo de IA)
 oride.php            Página enlazable de cada código
@@ -131,6 +131,20 @@ Para probar el formulario de mejora sin enviar correos, crea `config.local.php` 
 ## Pendiente
 
 - El aviso legal incluye lo indicado: responsable, contacto, ausencia de cookies y datos recogidos. Conviene que lo revise un profesional; según la actividad, la LSSI puede exigir datos adicionales, como el NIF o un domicilio.
+
+## Accesibilidad
+
+Objetivo: WCAG 2.2 nivel AA. Revisado con axe-core en todas las páginas (los dos idiomas, escritorio y móvil, con desgloses abiertos) y con comprobaciones adicionales de reflujo a 320 px, espaciado de texto, tamaño mínimo de objetivos (24 × 24 px), navegación con teclado y foco visible:
+
+```bash
+ORIDE_URL=http://127.0.0.1:8097/ AXE_DIR=node_modules/axe-core node tests/a11y-axe.js
+```
+
+```bash
+ORIDE_URL=http://127.0.0.1:8097/ node tests/a11y-manual.js
+```
+
+Las herramientas automáticas no sustituyen una prueba con personas usuarias de lectores de pantalla.
 
 ## Licencia
 

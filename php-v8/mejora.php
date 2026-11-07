@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/app.php';
 
 /*
- * Formulario «¿Cómo puede mejorar el Código ORIDE?».
+ * Formulario de Contacto.
  * Sin sesiones ni cookies: la protección antispam usa una marca de tiempo firmada,
  * un campo trampa y un límite global de mensajes por hora. Nada se guarda en el servidor.
  */
@@ -46,8 +46,8 @@ function under_limit(): bool
 function send_feedback(string $name, string $email, string $comment): bool
 {
     $from = cfg('mail_from') ?: 'ORIDE <no-reply@' . preg_replace('/:\d+$/', '', preg_replace('/^www\./', '', host())) . '>';
-    $subject = '=?UTF-8?B?' . base64_encode('Mejora del Código ORIDE · ' . $name) . '?=';
-    $body = "Nombre y apellidos: $name\nEmail: $email\nIdioma: " . lang() . "\n\nComentario:\n$comment\n\n--\nEnviado desde " . abs_url('mejora.php') . "\n";
+    $subject = '=?UTF-8?B?' . base64_encode('Contacto ORIDE · ' . $name) . '?=';
+    $body = "Nombre y apellidos: $name\nEmail: $email\nIdioma: " . lang() . "\n\nMensaje:\n$comment\n\n--\nEnviado desde " . abs_url('mejora.php') . "\n";
     $headers = "From: $from\r\nReply-To: $email\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit";
     if (cfg('debug')) {
         return file_put_contents(ORIDE_ROOT . '/storage/correo-pruebas.log', "To: " . cfg('mail_to') . "\r\n$headers\r\nSubject: $subject\r\n\r\n$body\n=====\n", FILE_APPEND | LOCK_EX) !== false;
@@ -68,9 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($name === '') $errors['nombre'] = tr('Escribe tu nombre y apellidos.', 'Enter your full name.');
     if ($email === '') $errors['email'] = tr('Escribe tu correo electrónico.', 'Enter your email address.');
     elseif (!filter_var($email, FILTER_VALIDATE_EMAIL) || preg_match('/[\r\n]/', $email)) $errors['email'] = t('v_email');
-    if (mb_strlen($comment) < 5) $errors['comentario'] = tr('Escribe tu comentario.', 'Write your comment.');
+    if (mb_strlen($comment) < 5) $errors['comentario'] = tr('Escribe tu mensaje.', 'Write your message.');
     if (!$errors) {
-        if (!token_ok(post('t'))) $failure = tr('El formulario ha caducado o se envió demasiado rápido. Vuelve a pulsar «Enviar comentario».', 'The form expired or was sent too quickly. Press “Send comment” again.');
+        if (!token_ok(post('t'))) $failure = tr('El formulario ha caducado o se envió demasiado rápido. Vuelve a pulsar «Enviar mensaje».', 'The form expired or was sent too quickly. Press “Send message” again.');
         elseif (!under_limit()) $failure = tr('Ahora mismo hay demasiados mensajes. Inténtalo en un rato o escribe a info@itakora.com.', 'There are too many messages right now. Try again later or write to info@itakora.com.');
         elseif (!send_feedback($name, $email, $comment)) $failure = tr('No se ha podido enviar el mensaje. Tu texto sigue aquí: inténtalo de nuevo o escribe a info@itakora.com.', 'Your message could not be sent. Your text is still here: try again or write to info@itakora.com.');
         else { header('Location: ' . u('mejora.php?enviado=1'), true, 303); exit; }
@@ -84,24 +84,24 @@ $field = function (string $id, string $label, string $type, string $value, array
     return '<div class="field"><label for="' . $id . '">' . h($label) . '</label>' . $input . '<p class="field-error" id="' . $id . '-error"' . ($err ? '' : ' hidden') . '>' . h($err) . '</p></div>';
 };
 
-page_start(t('nav_feedback'), tr('Envíanos tus ideas para mejorar el Código ORIDE.', 'Send us your ideas to improve the ORIDE Code.'));
+page_start(t('nav_feedback'), tr('Escribe a Olga Revilla para colaborar, proponer mejoras, avisar de errores o hacer preguntas sobre ORIDE.', 'Write to Olga Revilla to collaborate, suggest improvements, report bugs or ask questions about ORIDE.'));
 ?>
 <div class="container narrow-form page">
   <h1><?= h(t('nav_feedback')) ?></h1>
   <?php if ($sent): ?>
-    <?= alert(tr('Gracias. Hemos recibido tu comentario.', 'Thank you. We have received your comment.'), 'ok') ?>
+    <?= alert(tr('Gracias. He recibido tu mensaje y te responderé pronto.', 'Thank you. I have received your message and will reply soon.'), 'ok') ?>
     <p><a class="btn btn-secondary" href="<?= u('index.php') ?>"><?= h(tr('Volver al inicio', 'Back to home')) ?></a></p>
   <?php else: ?>
-    <p class="muted"><?= h(tr('Cuéntanos qué cambiarías. Leemos todos los mensajes.', 'Tell us what you would change. We read every message.')) ?></p>
+    <p class="lead"><?= h(tr('Si quieres colaborar en el desarrollo de la idea, implementar una mejora, tienes alguna duda sobre cómo funciona, has encontrado un error, quieres avisarnos de que lo estás usando en tu trabajo o simplemente hacer una pregunta, contacta con Olga. Prometo leer y responder a todos los mensajes.', 'If you would like to collaborate on developing the idea, implement an improvement, have a question about how it works, have found a bug, want to let us know you are using it in your work, or simply want to ask something, get in touch with Olga. I promise to read and reply to every message.')) ?></p>
     <?php if ($failure) echo alert($failure, 'danger'); ?>
     <form class="card" method="post" action="<?= u('mejora.php') ?>" data-validate>
       <input type="hidden" name="t" value="<?= h(form_token()) ?>">
       <?= $field('nombre', tr('Nombre y apellidos', 'Full name'), 'text', $name, ['attrs' => ' maxlength="120" autocomplete="name"']) ?>
       <?= $field('email', 'Email', 'email', $email, ['attrs' => ' maxlength="254" autocomplete="email"']) ?>
-      <?= $field('comentario', tr('Comentario', 'Comment'), 'textarea', $comment) ?>
+      <?= $field('comentario', tr('Mensaje', 'Message'), 'textarea', $comment) ?>
       <div class="hp" aria-hidden="true"><label for="web"><?= h(tr('No rellenes este campo', 'Leave this field empty')) ?></label><input id="web" name="web" tabindex="-1" autocomplete="off"></div>
-      <p class="small muted"><?= h(tr('Usaremos estos datos solo para leer tu propuesta y responderte. No se guardan en este sitio.', 'We will use this data only to read your suggestion and reply. It is not stored on this site.')) ?> <a href="<?= u('legal.php') ?>"><?= h(tr('Privacidad', 'Privacy')) ?></a></p>
-      <button class="btn btn-primary"><?= h(tr('Enviar comentario', 'Send comment')) ?></button>
+      <p class="small muted"><?= h(tr('Usaré estos datos solo para leer tu mensaje y responderte. No se guardan en este sitio.', 'I will use this data only to read your message and reply. It is not stored on this site.')) ?> <a href="<?= u('legal.php') ?>"><?= h(tr('Privacidad', 'Privacy')) ?></a></p>
+      <button class="btn btn-primary"><?= h(tr('Enviar mensaje', 'Send message')) ?></button>
     </form>
   <?php endif; ?>
 </div>

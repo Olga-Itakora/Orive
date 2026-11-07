@@ -3,7 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/app.php';
 
 // Código ORIDE de este sitio web.
-const SITE_CODE = 'SW-IA1-EV1-COD44';
+const SITE_CODE = 'SW-IA1-EV1-REQ21-ARQ44-COD44-REF33-PRU54-DOC34';
 $siteCode = oride_explain(SITE_CODE)['result'];
 
 page_start(t('nav_about'), tr('Quién está detrás de ORIDE, cómo nació y cómo contactar.', 'Who is behind ORIDE, how it started and how to get in touch.'));
@@ -34,8 +34,9 @@ page_start(t('nav_about'), tr('Quién está detrás de ORIDE, cómo nació y có
   </ul>
 
   <h2><?= h(tr('El Código ORIDE de este sitio', 'This site’s ORIDE Code')) ?></h2>
-  <p><?= h(tr('Como no podía ser de otra forma, este sitio también tiene su código:', 'Of course, this site has its own code too:')) ?> <a class="mono" href="<?= u('oride.php?' . SITE_CODE) ?>">ORIDE <?= implode(' / ', $siteCode['lines']) ?></a>.</p>
-  <?= code_box($siteCode, ['title' => t('code_label')]) ?>
+  <p><?= h(tr('Como no podía ser de otra forma, este sitio también tiene su código:', 'Of course, this site has its own code too:')) ?></p>
+  <p class="formula code-example"><a class="mono" href="<?= u('oride.php?' . SITE_CODE) ?>">ORIDE <?= implode('<br>', array_map('h', $siteCode['lines'])) ?></a></p>
+  <?= code_box($siteCode) ?>
   <?= honor_note() ?>
   <p><a class="btn btn-secondary" href="<?= u('mejora.php') ?>"><?= h(t('nav_feedback')) ?></a></p>
 </div>

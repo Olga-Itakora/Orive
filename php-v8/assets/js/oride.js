@@ -48,6 +48,13 @@
     document.body.removeChild(ta);
     return ok;
   }
+  // Región oculta para anunciar a los lectores de pantalla mensajes breves («Copiado»).
+  var live = document.createElement("p");
+  live.className = "sr-only";
+  live.setAttribute("role", "status");
+  document.body.appendChild(live);
+  function announce(msg) { live.textContent = ""; setTimeout(function () { live.textContent = msg; }, 50); }
+
   // Botones de copiar: delegación, para que funcionen también en lo que se redibuja (caja del índice).
   var COPY_ATTRS = ["data-copy-code", "data-copy-text", "data-copy-link", "data-copy-index"];
   document.addEventListener("click", function (e) {
@@ -60,6 +67,7 @@
     btn.setAttribute("data-label", label);
     copyText(text).then(function (ok) {
       btn.textContent = ok ? fmt("copied") : fmt("copy_failed");
+      announce(btn.textContent);
       setTimeout(function () { btn.textContent = label; }, 1800);
     });
   });
@@ -146,6 +154,11 @@
       bc.setAttribute("data-copy-code", d.copy.code);
       bt.setAttribute("data-copy-text", d.copy.text);
       bl.setAttribute("data-copy-link", d.copy.link);
+      var vf = $("[data-verify]", box);
+      if (vf) {
+        if (d.verifyUrl) { vf.setAttribute("href", d.verifyUrl); vf.removeAttribute("aria-disabled"); }
+        else { vf.removeAttribute("href"); vf.setAttribute("aria-disabled", "true"); }
+      }
       if (chip) {
         chip.hidden = d.status === "empty";
         $("[data-chip-code]", chip).textContent = d.chip;

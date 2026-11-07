@@ -461,10 +461,10 @@ function ig_percent(array $ig): string
  * Caja del Índice Global ORIDE: destacada, siempre visible. Mientras no se pueda calcular,
  * dice «Pendiente de los valores de las actividades».
  */
-function index_panel(array $ig, array $r, array $extra = [], bool $inst = false): string
+function index_panel(array $ig, array $r, array $extra = [], bool $inst = false, bool $copy = true): string
 {
-    $title = $inst ? t('ig_title_max') : t('ig_title');
-    $html = '<div class="ig-box" data-index-box><p class="ig-head">' . h($title) . '</p>';
+    $title = $inst ? t('ig_box_title_max') : t('ig_box_title');
+    $html = '<div class="hl-box ig-box" data-index-box><h3 class="ig-head hl-head">' . h($title) . '</h3>';
     if ($ig['status'] !== 'ok') {
         $nc = in_array($ig['reason'], ['config', 'version'], true);
         $html .= '<p class="ig-value ig-pending">' . h($nc ? t('ig_nc') : t('ig_pending')) . '</p>';
@@ -474,8 +474,8 @@ function index_panel(array $ig, array $r, array $extra = [], bool $inst = false)
     }
     $single = (int) round($ig['IG'][0]) === (int) round($ig['IG'][1]);
     $html .= '<p class="ig-value-row"><b class="ig-value">' . h(ig_percent($ig)) . '</b>' . ($single ? '' : '<span class="ig-est">' . h(t('ig_estimate')) . '</span>')
-        . '<button type="button" class="btn btn-ig-copy" data-copy-index="' . h(ig_line($ig, $inst)) . '">' . h(t('copy_index')) . '</button></p>';
-    $html .= '<details class="ig-details"><summary>' . h(t('ig_breakdown')) . '</summary><ul>';
+        . ($copy ? '<button type="button" class="btn btn-hl" data-copy-index="' . h(ig_line($ig, $inst)) . '">' . h(t('copy_index')) . '</button>' : '') . '</p>';
+    $html .= '<details class="hl-details ig-details"><summary>' . h(t('ig_breakdown')) . '</summary><ul>';
     $html .= '<li>' . h(t('ig_G')) . ': <b>' . h(num_range($ig['G'])) . '</b>';
     if ($ig['q'] !== null) {
         $src = ['scope' => 'ig_q_scope', 'question' => 'ig_q_question', 'exact' => 'ig_q_exact'][$ig['q_source']];
@@ -496,14 +496,17 @@ function index_panel(array $ig, array $r, array $extra = [], bool $inst = false)
 }
 
 /**
- * @param array{live?:bool, title?:string, intro?:string, actions?:bool, reader?:bool, extra?:array} $o
- *   live: la rellena oride.js; intro: frase previa (instituciones); actions: botones de copiar;
- *   extra: respuesta a la pregunta de proporción (q, qp) para el índice
+ * Caja «Declaración ORIDE»: dentro, la caja «Código» (con su desglose a petición) y la caja «Índice global».
+ * @param array{live?:bool, title?:string, intro?:string, actions?:bool, copy?:bool, reader?:bool, extra?:array, verify?:bool} $o
+ *   live: la rellena oride.js; intro: frase previa (instituciones); actions: copiar declaración y enlace;
+ *   copy: botones de copiar código e índice; extra: respuesta a la pregunta de proporción (q, qp);
+ *   verify: botón «Verificar una entrega» (instituciones)
  */
 function code_box(array $r, array $o = []): string
 {
     $live = !empty($o['live']);
     $actions = $o['actions'] ?? $live;
+    $copy = $o['copy'] ?? true;
     $intro = $o['intro'] ?? '';
     $reader = $intro !== '' || !empty($o['reader']);
     $extra = $o['extra'] ?? [];
@@ -514,21 +517,27 @@ function code_box(array $r, array $o = []): string
         default => t('status_empty'),
     };
     $complete = $r['status'] === 'complete';
+    $copyCode = $complete ? 'ORIDE ' . implode("\n", $r['lines']) : '';
     $html = '<section class="code-card decl-box" id="declaracion" aria-labelledby="decl-title"' . ($live ? ' data-box' : '') . '><div class="inner">'
-        . '<p class="label" id="decl-title">' . h($o['title'] ?? t('your_code')) . '</p>'
-        . ($intro !== '' ? '<p class="intro" data-intro>' . h($intro) . '</p>' : '')
-        . '<p class="big code-line" data-code aria-live="polite">' . code_segments($r) . '</p>'
-        . '<div data-index>' . index_panel($ig, $r, $extra, $intro !== '') . '</div>'
+        . '<h2 class="label" id="decl-title">' . h($o['title'] ?? t('decl_title')) . '</h2>'
+        . ($intro !== '' ? '<p class="intro" data-intro>' . h($intro) . '</p>' : '');
+    // Caja «Código»
+    $html .= '<div class="hl-box code-box"><div class="hl-top"><h3 class="hl-head">' . h(t('code_box_title')) . '</h3>'
+        . ($copy ? '<button type="button" class="btn btn-hl" data-copy-code="' . h($copyCode) . '"' . ($complete ? '' : ' disabled') . '>' . h(t('copy_code')) . '</button>' : '')
+        . '</div><p class="big code-line" data-code aria-live="polite">' . code_segments($r) . '</p>'
+        . '<details class="hl-details code-details"><summary>' . h(t('code_breakdown')) . '</summary><div class="dims" data-explain>' . explain_list($r, $reader) . '</div></details></div>';
+    // Caja «Índice global»
+    $html .= '<div data-index aria-live="polite">' . index_panel($ig, $r, $extra, $intro !== '', $copy) . '</div>'
         . ($live ? '<p class="status" data-status aria-live="polite">' . h($status) . '</p>' : '')
-        . all_zero_note($r, $reader)
-        . '<div class="dims" data-explain>' . explain_list($r, $reader) . '</div>';
+        . all_zero_note($r, $reader);
     if ($actions) {
-        $copyCode = $complete ? 'ORIDE ' . implode("\n", $r['lines']) : '';
         $html .= '<div class="box-actions">'
-            . '<button type="button" class="btn btn-copy" data-copy-code="' . h($copyCode) . '"' . ($complete ? '' : ' disabled') . '>' . h(t('copy_code')) . '</button>'
             . '<button type="button" class="btn btn-copy" data-copy-text="' . h(oride_text($r, $intro, $ig, $extra)) . '"' . ($complete ? '' : ' disabled') . '>' . h(t('copy_text')) . '</button>'
-            . '<button type="button" class="btn btn-copy" data-copy-link="' . h($complete ? code_url($r['code'], $extra) : '') . '"' . ($complete ? '' : ' disabled') . '>' . h(t('copy_link')) . '</button>'
-            . '</div>';
+            . '<button type="button" class="btn btn-copy" data-copy-link="' . h($complete ? code_url($r['code'], $extra) : '') . '"' . ($complete ? '' : ' disabled') . '>' . h(t('copy_link')) . '</button>';
+        if (!empty($o['verify'])) {
+            $html .= '<a class="btn btn-copy" data-verify' . ($complete ? ' href="' . h(u('comprobar.php?r=' . rawurlencode($r['code']))) . '"' : ' aria-disabled="true"') . '>' . h(t('cmp_title')) . '</a>';
+        }
+        $html .= '</div>';
     }
     $html .= '</div>' . ($live ? '<p class="foot">' . h(t('honor')) . ' <a href="' . u('codigo.php') . '">' . h(t('what_means')) . '</a></p>' : '') . '</section>';
     return $html;

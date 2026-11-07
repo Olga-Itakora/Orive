@@ -17,10 +17,10 @@ $example = oride_compute(['type' => 'LI', 'ia' => 'si', 'acts' => ['IDE', 'FOR']
       <p class="lead"><?= h(t('site_description')) ?></p>
       <div class="actions">
         <a class="btn btn-primary btn-lg" href="<?= u('crear.php') ?>"><?= h(t('nav_create')) ?></a>
-        <a class="btn btn-secondary btn-lg" href="<?= u('codigo.php') ?>"><?= h(tr('Qué significa el código', 'What the code means')) ?></a>
+        <a class="btn btn-secondary btn-lg" href="<?= u('que-es.php') ?>"><?= h(tr('Qué es una declaración ORIDE', 'What an ORIDE declaration is')) ?></a>
       </div>
     </div>
-    <?= code_box($example, ['title' => t('example')]) ?>
+    <?= code_box($example, ['title' => tr('Ejemplo de declaración ORIDE', 'Example ORIDE declaration'), 'copy' => false]) ?>
   </div>
 </section>
 

@@ -110,3 +110,18 @@ function inst_tabs(string $current): string
     foreach ($tabs as $href => $label) $html .= '<li><a href="' . u($href) . '"' . ($href === $current ? ' aria-current="page"' : '') . '>' . h($label) . '</a></li>';
     return $html . '</ul></nav>';
 }
+
+/** Cabecera común de Instituciones (pestañas «Crear un requisito» y «Verificar una entrega»). */
+function inst_header(string $current): string
+{
+    $who = en()
+        ? ['Schools and universities', 'Research centres, conferences and journals', 'Publishers', 'Literary and art competitions', 'Advertising agencies and design studios', 'Organisations running calls, grants and awards', 'Companies or professionals and their clients']
+        : ['Centros educativos y universidades', 'Centros, congresos y revistas de investigación', 'Editoriales', 'Concursos literarios y artísticos', 'Agencias de publicidad y estudios de diseño', 'Entidades que organizan convocatorias, becas y premios', 'Empresas o profesionales y sus clientes'];
+    $html = '<div class="inst-head narrow-text"><h1>' . h(t('nav_inst')) . '</h1>'
+        . '<p class="subtitle">' . h(tr('Establece qué uso de IA permites en las obras que recibes', 'Set what use of AI you allow in the work you receive')) . '</p>'
+        . '<p>' . h(tr('Define mediante un código ORIDE qué usos de inteligencia artificial aceptas y con qué límites. Quienes presenten sus trabajos podrán conocer las condiciones de antemano, declarar cómo han utilizado la IA y comprobar si su código ORIDE se ajusta a los requisitos establecidos.', 'Use an ORIDE code to define which uses of artificial intelligence you accept and within what limits. Those who submit their work can know the conditions in advance, declare how they used AI and check whether their ORIDE code meets the requirements.')) . '</p>'
+        . '<p>' . h(tr('Una forma clara y sencilla de incorporar criterios de uso de IA en bases de concursos, normas de entrega, encargos y contratos.', 'A clear and simple way to include AI-use criteria in competition rules, submission guidelines, commissions and contracts.')) . '</p>'
+        . '<h2 class="who-title">' . h(tr('¿A quién puede resultar útil?', 'Who might find it useful?')) . '</h2><ul class="who-list">';
+    foreach ($who as $w) $html .= '<li>' . h($w) . '</li>';
+    return $html . '</ul></div>' . inst_tabs($current);
+}

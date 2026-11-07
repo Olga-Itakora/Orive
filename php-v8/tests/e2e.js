@@ -66,7 +66,11 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   ok('sin aviso cuando hay uso real', !(await page.isVisible('[data-allzero]')));
   ok('aparece la pregunta de proporción (hay generación)', await page.isVisible('[data-showq]'));
   ok('índice entero, como intervalo (alcance en tramos)', (await igIs('18–23 %')) === '18–23 %', await ig());
-  ok('la caja del índice va justo debajo del código', await page.evaluate(() => { const c = document.querySelector('[data-code]'), b = document.querySelector('.ig-box'); return c.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING && b.getBoundingClientRect().top < document.querySelector('[data-explain]').getBoundingClientRect().top; }));
+  ok('caja «Declaración ORIDE» con la caja «Código» y, debajo, la caja «Índice global»', (await page.locator('#decl-title').textContent()) === 'Declaración ORIDE' && (await page.locator('.code-box .hl-head').textContent()) === 'Código' && (await page.locator('.ig-box .hl-head').textContent()) === 'Índice global' && await page.evaluate(() => document.querySelector('.code-box').getBoundingClientRect().bottom <= document.querySelector('.ig-box').getBoundingClientRect().top));
+  ok('copiar código dentro de la caja «Código»', await page.locator('.code-box [data-copy-code]').count() === 1);
+  ok('desglose del código a petición', !(await page.isVisible('[data-explain]')) && (await page.locator('.code-details summary').innerText()).startsWith('Desglose del código'));
+  await page.click('.code-details summary');
+  ok('al abrir el desglose del código se ve la explicación', (await page.locator('[data-explain]').innerText()).includes('Literatura'));
   ok('caja del índice en otro color', await page.evaluate(() => getComputedStyle(document.querySelector('.ig-box')).backgroundColor !== getComputedStyle(document.querySelector('.decl-box')).backgroundColor));
   await page.check('input[name=q][value="6"]');
   ok('con «La totalidad»: 23 %', (await igIs('23 %')) === '23 %', await ig());
@@ -135,7 +139,8 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   }
   await page.click('.breadcrumb a');
   ok('la miga de pan vuelve a Documentación', page.url().includes('documentacion.php'));
-  ok('Documentación enlaza el código y el índice', await page.locator('.doc-cards a[href*="codigo.php"]').count() === 1 && await page.locator('.doc-cards a[href*="indice.php"]').count() === 1);
+  ok('Documentación: sin tarjetas bajo el menú, enlaces solo en el texto', await page.locator('.doc-cards').count() === 0 && await page.locator('#codigo a[href*="codigo.php"]').count() >= 1 && await page.locator('#indice a[href*="indice.php"]').count() >= 1);
+  ok('Documentación: salto de línea antes de «Cada código tiene su propia página»', await page.locator('#codigo p:has(br)', { hasText: 'Cada código tiene su propia página' }).count() === 1);
   await page.goto(B + 'indice.php');
   const idx = await page.locator('main').innerText();
   ok('página «Cómo se calcula»: fórmula, factores, limitaciones y versión', ['IG = G + (100 − G) · P', 'Limitaciones', 'ORIDE-IG-1.0-experimental', '0,85', '52,5'].every(t => idx.includes(t)));
@@ -159,13 +164,20 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.check('input[name=u_SC_RED][value="3"]');
   await page.check('input[name=s_SC_RED][value="1"]');
   ok('instituciones: código de referencia en dos líneas', (await waitCode('SC-IA1-EV1RED31')) === 'SC-IA1-EV1RED31');
-  ok('instituciones: el requisito incluye el Índice Global máximo', (await page.locator('.ig-box .ig-head').textContent()).includes('Índice Global ORIDE máximo') && /%$/.test(await igIs('3–13 %')));
-  ok('instituciones: el texto copiado incluye el índice máximo', (await page.getAttribute('[data-copy-text]', 'data-copy-text')).includes('Índice Global ORIDE máximo:'));
+  ok('instituciones: caja «Requisito ORIDE» con el Índice global máximo', (await page.locator('#decl-title').textContent()) === 'Requisito ORIDE' && (await page.locator('.ig-box .ig-head').textContent()).includes('Índice global máximo') && /%$/.test(await igIs('3–13 %')));
+  ok('instituciones: el texto copiado incluye el índice máximo', (await page.getAttribute('[data-copy-text]', 'data-copy-text')).includes('Índice Global ORIDE máximo: 3–13 %'));
+  ok('instituciones: botón «Verificar una entrega» con el código', /comprobar\.php\?r=SC-IA1-EV1-RED31/.test(await page.getAttribute('[data-verify]', 'href')));
+  await page.click('[data-verify]');
+  ok('el botón lleva a la pestaña de verificación con el primer campo relleno', page.url().includes('comprobar.php') && (await page.inputValue('#r')) === 'SC-IA1-EV1-RED31');
+  ok('el texto de Instituciones también aparece en la pestaña de verificación', (await page.locator('.inst-head').innerText()).includes('Establece qué uso de IA permites en las obras que recibes') && (await page.locator('.who-list li').count()) === 7);
+  await page.goto(B + 'instituciones.php');
+  ok('Instituciones: texto nuevo', (await page.locator('.inst-head').innerText()).includes('Una forma clara y sencilla de incorporar criterios de uso de IA'));
+  ok('pestañas sin desplazamiento (sin flechas)', await page.evaluate(() => getComputedStyle(document.querySelector('.tabs')).overflowX === 'visible'));
   await page.click('.tabs a[href*="comprobar.php"]');
   await page.fill('#r', 'SC-IA1-EV1-RED31');
   await page.fill('#d', 'SC-IA1-EV1\nRED51');
   await page.click('main form button.btn-primary');
-  ok('verificar: no cumple si supera el grado', (await page.locator('.cmp-result h2').innerText()) === 'No cumple el requisito' && (await page.locator('.cmp-checks').innerText()).includes('supera el máximo'));
+  ok('verificar: no cumple y explica por qué con las opciones del formulario', (await page.locator('.cmp-result h2').innerText()) === 'No cumple el requisito' && (await page.locator('.cmp-checks').innerText()).includes('se pide como máximo «Transformé sustancialmente los resultados», pero la persona autora ha señalado «Incorporé los resultados prácticamente sin cambios»'));
   await page.fill('#d', 'SC-IA1-EV1-RED21');
   await page.click('main form button.btn-primary');
   ok('verificar: cumple si está por debajo', (await page.locator('.cmp-result h2').innerText()) === 'Cumple el requisito');
@@ -174,7 +186,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
 
   // Pie
   const foot = await page.locator('footer').innerText();
-  ok('pie: solo Sobre este sitio, Aviso legal y ¿Cómo puede mejorar ORIDE?', JSON.stringify((await page.locator('footer .footer-links').innerText()).split('\n').map(x => x.trim()).filter(Boolean)) === JSON.stringify(['Sobre este sitio', 'Aviso legal y privacidad', '¿Cómo puede mejorar ORIDE?']));
+  ok('pie: Sobre este sitio, Aviso legal y Contacto en la misma línea', JSON.stringify(await page.locator('footer .footer-links a').allInnerTexts()) === JSON.stringify(['Sobre este sitio', 'Aviso legal y privacidad', 'Contacto']) && new Set(await page.locator('footer .footer-links a').evaluateAll(as => as.map(a => Math.round(a.getBoundingClientRect().top)))).size === 1);
   ok('pie sin correo, marco normativo ni índice', !foot.includes('info@itakora.com') && !foot.includes('Marco normativo') && !foot.includes('Índice Global'));
   ok('pie con la licencia CC BY-NC-ND 4.0', (await page.locator('footer .license').textContent()).replace(/\s+/g, ' ').includes('Oride © 2026 de Olga Revilla está bajo la licencia CC BY-NC-ND 4.0') && await page.locator('footer img.cc-icon').count() === 4);
   ok('pie sin estilos en línea (CSP)', (await page.locator('footer [style]').count()) === 0);
@@ -192,6 +204,9 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.goto(B + 'sobre.php');
   const about = await page.locator('main').innerText();
   ok('Sobre este sitio en primera persona', about.includes('Hola, soy Olga Revilla Muñoz') && !about.includes('La autora de este sitio'));
+  ok('código de este sitio', about.includes('ORIDE SW-IA1-EV1\nREQ21-ARQ44-COD44-REF33-PRU54-DOC34'));
+  await page.goto(B);
+  ok('inicio: sin «Copiar índice» y botón «Qué es una declaración ORIDE»', (await page.locator('[data-copy-index]').count()) === 0 && (await page.getAttribute('a:has-text("Qué es una declaración ORIDE")', 'href')).includes('que-es.php'));
 
   // Copiar sin HTTPS
   const insecure = await newPage();
@@ -203,14 +218,15 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.goto(B + 'mejora.php');
   await page.fill('#nombre', 'Ana Prueba'); await page.fill('#email', 'ana@example.com'); await page.fill('#comentario', 'Una idea para mejorar.');
   await page.waitForTimeout(3200);
-  await page.click('text=Enviar comentario');
-  ok('mensaje enviado', await page.isVisible('text=Hemos recibido tu comentario'));
+  ok('Contacto: título y texto', (await page.locator('h1').innerText()) === 'Contacto' && (await page.locator('main .lead').innerText()).includes('Prometo leer y responder a todos los mensajes'));
+  await page.click('text=Enviar mensaje');
+  ok('mensaje enviado', await page.isVisible('text=He recibido tu mensaje'));
   ok('ninguna cookie', (await page.context().cookies()).length === 0);
 
   // Inglés
   const enp = await newPage({ locale: 'en-GB' });
   await enp.goto(B + 'crear.php?type=TR&ia=si&ev=no&acts_TR[]=GEN&u_TR_GEN=5&s_TR_GEN=4');
-  ok('inglés: código e índice', (await code(enp)) === 'TR-IA1-EV0GEN54' && (await enp.locator('.ig-head').textContent()).includes('ORIDE Global Index') && (await ig(enp)) === '75–100%');
+  ok('inglés: código e índice', (await code(enp)) === 'TR-IA1-EV0GEN54' && (await enp.locator('.ig-head').textContent()) === 'Global index' && (await ig(enp)) === '75–100%');
   await enp.click('[data-lang-switch]');
   ok('cambio de idioma conserva el código', (await code(enp)) === 'TR-IA1-EV0GEN54' && (await enp.getAttribute('html', 'lang')) === 'es');
   for (const pg of ['', 'que-es.php', 'como-funciona.php', 'codigo.php', 'instituciones.php', 'comprobar.php?r=LI-IA1-EV1-GEN24&d=LI-IA1-EV0-GEN34', 'documentacion.php', 'sobre.php', 'legal.php', 'mejora.php', 'indice.php', 'oride.php?LI-IA1-EV1-DOC44', 'crear.php?type=LI&ia=si&ev=si&acts_LI[]=GEN&u_LI_GEN=4&s_LI_GEN=2']) {

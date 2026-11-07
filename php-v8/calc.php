@@ -57,4 +57,5 @@ echo json_encode([
         'text' => oride_text($r, $intro, $ig, $extra),
         'link' => $complete ? code_url($r['code'], $extra) : '',
     ],
+    'verifyUrl' => $complete ? u('comprobar.php?r=' . rawurlencode($r['code'])) : '',
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

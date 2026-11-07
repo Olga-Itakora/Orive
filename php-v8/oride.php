@@ -61,7 +61,7 @@ page_start($title, $r ? implode(' ', plain_explanation($r)) : tr('Qué significa
     <ul class="plain-list">
       <?php foreach (plain_explanation($r) as $line) echo '<li>' . h($line) . '</li>'; ?>
     </ul>
-    <?= code_box($r, ['title' => t('code_label'), 'actions' => true, 'reader' => true, 'extra' => $extra]) ?>
+    <?= code_box($r, ['actions' => true, 'reader' => true, 'extra' => $extra]) ?>
     <?= honor_note() ?>
   <?php else: ?>
     <h1><?= h(t('code_label')) ?></h1>

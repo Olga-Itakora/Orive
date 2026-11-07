@@ -27,9 +27,8 @@ $codeSummary = function (array $r) {
 page_start(t('cmp_title'), tr('Comprueba si el Código ORIDE de una entrega supera el requisito que fijaste.', 'Check whether the ORIDE Code of a submission exceeds the requirement you set.'));
 ?>
 <div class="container page">
+  <?= inst_header('comprobar.php') ?>
   <div class="narrow-text">
-    <h1><?= h(t('nav_inst')) ?></h1>
-    <?= inst_tabs('comprobar.php') ?>
     <p class="lead"><?= h(tr('Pega el código que fijaste como requisito y el que declaró la persona autora.', 'Paste the code you set as a requirement and the one the author declared.')) ?></p>
     <form class="card" method="get" action="<?= u('comprobar.php') ?>">
       <?= lang_field() ?>
@@ -52,7 +51,7 @@ page_start(t('cmp_title'), tr('Comprueba si el Código ORIDE de una entrega supe
     <?php endif; ?>
 
     <p class="small muted spaced"><?= h(tr('Una entrega no cumple si es de otro tipo de obra, si usa IA cuando no se permite, si no conserva evidencias cuando se exigen, si en alguna actividad limitada usa la IA con un grado o un alcance mayor que el máximo, o si su Índice Global supera el del requisito. La verificación compara códigos declarados: no comprueba el uso real de IA.', 'A submission does not meet the requirement if it is a different type of work, uses AI when it is not allowed, keeps no evidence when it is required, uses AI in a limited activity with a higher degree or scope than the maximum, or has a Global Index above the requirement’s. The check compares declared codes: it does not verify the actual use of AI.')) ?></p>
-    <p><a href="<?= u('instituciones.php') ?>"><?= h(tr('Crear un requisito', 'Create a requirement')) ?></a></p>
+    <p><a class="link-24" href="<?= u('instituciones.php') ?>"><?= h(tr('Crear un requisito', 'Create a requirement')) ?></a></p>
   </div>
 </div>
 <?php page_end();

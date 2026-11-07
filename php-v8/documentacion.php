@@ -41,10 +41,6 @@ page_start(t('nav_docs'), tr('Cómo funcionan el Código ORIDE y el Índice Glob
     <a href="#indice"><?= h(tr('Cómo funciona el índice', 'How the index works')) ?></a>
     <a href="#preguntas"><?= h(t('nav_faq')) ?></a>
   </nav>
-  <div class="doc-cards">
-    <a class="card doc-card" href="<?= u('codigo.php') ?>"><b><?= h(t('nav_code')) ?></b><span class="muted small"><?= h(tr('Formato, tipos de obra, actividades, grados y alcance, y un lector de códigos.', 'Format, types of work, activities, degrees and scope, and a code reader.')) ?></span></a>
-    <a class="card doc-card" href="<?= u('indice.php') ?>"><b><?= h(tr('Cómo se calcula el Índice Global ORIDE', 'How the ORIDE Global Index is calculated')) ?></b><span class="muted small"><?= h(tr('Fórmula, factores, pesos por disciplina, ejemplos y limitaciones.', 'Formula, factors, weights by discipline, examples and limitations.')) ?></span></a>
-  </div>
 
   <section id="codigo">
     <h2><?= h(tr('Cómo funciona el Código ORIDE', 'How the ORIDE Code works')) ?></h2>
@@ -67,7 +63,7 @@ page_start(t('nav_docs'), tr('Cómo funcionan el Código ORIDE y el Índice Glob
       </tbody></table>
     </div>
     <p class="muted"><?= tr('Con los grados 0 y 1 la segunda cifra es 0 (<span class="mono">DOC10</span>). Si se marca IA1 pero todas las actividades están a 0, hay que explicar el uso de la IA fuera de las actividades establecidas.', 'With degrees 0 and 1 the second digit is 0 (<span class="mono">DOC10</span>). If IA1 is given but every activity is at 0, the use of AI must be explained outside the listed activities.') ?></p>
-    <p><?= tr('Las actividades de cada tipo de obra están en <a href="' . h(u('codigo.php')) . '">Código ORIDE</a>. Cada código tiene su propia página, por ejemplo <a class="mono" href="' . h(u('oride.php?LI-IA1-EV1-DOC44-GEN24')) . '">oride.php?LI-IA1-EV1-DOC44-GEN24</a>.', 'The activities for each type of work are listed in <a href="' . h(u('codigo.php')) . '">ORIDE Code</a>. Each code has its own page, for example <a class="mono" href="' . h(u('oride.php?LI-IA1-EV1-DOC44-GEN24')) . '">oride.php?LI-IA1-EV1-DOC44-GEN24</a>.') ?></p>
+    <p><?= tr('Las actividades de cada tipo de obra están en <a href="' . h(u('codigo.php')) . '">Código ORIDE</a>.<br>Cada código tiene su propia página, por ejemplo <a class="mono" href="' . h(u('oride.php?LI-IA1-EV1-DOC44-GEN24')) . '">oride.php?LI-IA1-EV1-DOC44-GEN24</a>.', 'The activities for each type of work are listed in <a href="' . h(u('codigo.php')) . '">ORIDE Code</a>.<br>Each code has its own page, for example <a class="mono" href="' . h(u('oride.php?LI-IA1-EV1-DOC44-GEN24')) . '">oride.php?LI-IA1-EV1-DOC44-GEN24</a>.') ?></p>
   </section>
 
   <section id="indice">

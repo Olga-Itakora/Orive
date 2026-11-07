@@ -611,3 +611,50 @@ textarea.mono { font-family: var(--mono); text-transform: uppercase; }
 
 /* Pie: dos columnas */
 @media (min-width: 900px) { .footer-row { grid-template-columns: 1fr 1.5fr; } }
+
+/* v8.1: cajas destacadas «Código» e «Índice global» dentro de «Declaración ORIDE» */
+.code-card h2.label { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--petrol-200); margin: 0 0 8px; }
+.hl-box { margin: 12px 0; padding: 14px 16px; border-radius: var(--r-md); border: 2px solid var(--accent); color: var(--petrol-900); }
+.code-box { background: #ffffff; }
+.ig-box { background: #e3f4f1; }
+.hl-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.code-card .hl-box .hl-head { margin: 0; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--petrol-700); font-weight: 600; }
+.code-card .hl-box .code-line { color: var(--petrol-900); margin: 6px 0 4px; }
+.code-card .hl-box .code-line .sep { color: var(--petrol-600); opacity: 1; }
+.code-card .hl-box .seg-empty { color: #4f6d6e; opacity: 1; }
+.btn.btn-hl { min-height: 36px; padding: 0 12px; background: var(--petrol-800); color: #fff; border: 0; font-size: 0.8125rem; }
+.btn.btn-hl:hover:not(:disabled) { background: var(--petrol-700); }
+.btn.btn-hl:disabled { background: #6f8a8b; cursor: not-allowed; }
+.ig-value-row .btn-hl { margin-left: auto; }
+.code-card .hl-details { color: var(--petrol-900); margin: 4px 0 0; font-size: 0.8125rem; }
+.code-card .hl-details summary { color: var(--petrol-800); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; list-style: none; min-height: 32px; display: inline-flex; align-items: center; cursor: pointer; }
+.code-card .hl-details summary::-webkit-details-marker { display: none; }
+.code-card .hl-details summary::after { content: "▾"; display: inline-block; margin-left: 6px; text-decoration: none; }
+.code-card .hl-details[open] summary::after { content: "▴"; }
+.code-card .code-details .dims { margin-top: 8px; }
+.code-card .code-details .dim { background: #f2f7f6; color: var(--petrol-900); }
+.code-card .code-details .dim span { color: var(--petrol-700); }
+.code-card .code-details .dim p.val { color: var(--petrol-900); }
+.code-card .code-details .note { color: var(--petrol-700); }
+.box-actions a.btn-copy[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+
+/* Instituciones: cabecera y pestañas sin desplazamiento (sin flechas) */
+.inst-head { margin-bottom: 8px; }
+.inst-head .subtitle { font-size: 1.25rem; font-weight: 500; color: var(--petrol-800); margin: 0 0 12px; }
+.inst-head .who-title { font-size: 1rem; margin: 20px 0 0; }
+.tabs { overflow: visible; }
+.tabs ul { min-width: 0; flex-wrap: wrap; }
+
+/* Pie: los tres enlaces en una línea */
+.footer-links { display: flex; flex-wrap: wrap; gap: 0 24px; }
+
+/* Accesibilidad (WCAG 2.2 AA) */
+.footer-note, .footer-title { color: var(--muted); }                 /* contraste ≥ 4,5:1 */
+.breadcrumb li + li::before { color: var(--muted); }
+.code-card :focus-visible { outline: 3px solid #fff; outline-offset: 2px; } /* foco visible sobre fondo oscuro */
+.code-card .hl-box :focus-visible { outline-color: var(--petrol-800); }
+@media (max-width: 899px) { html { scroll-padding-bottom: 96px; } }  /* 2.4.11: la barra fija no tapa el foco */
+/* 2.5.8: objetivos de al menos 24 × 24 px */
+.license a, .breadcrumb a, .link-list a, .code-card .foot a, .link-24 { display: inline-block; min-height: 24px; line-height: 24px; }
+.license { line-height: 24px; }
+.qp-field input { min-height: 44px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-md); font: 400 1rem/1.5 var(--font); background: var(--surface); }

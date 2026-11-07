@@ -26,7 +26,7 @@ function oride_compare(array $req, array $decl): array
     if ($req['ia'] === 0 && $decl['ia'] === 1) $checks[] = ['fail', t('cmp_ia_forbidden')];
     else $checks[] = ['ok', t('cmp_ia_ok')];
 
-    if ($req['ev'] === 1) $checks[] = $decl['ev'] === 1 ? ['ok', t('cmp_ev_ok')] : [$decl['ev'] === null ? 'unknown' : 'fail', t('cmp_ev_missing')];
+    if ($req['ev'] === 1) $checks[] = $decl['ev'] === 1 ? ['ok', t('cmp_ev_ok')] : ($decl['ev'] === null ? ['unknown', t('cmp_ev_unknown')] : ['fail', t('cmp_ev_missing')]);
 
     if ($decl['ia'] === 1 && $req['ia'] === 1) {
         $reqActs = [];
@@ -36,8 +36,14 @@ function oride_compare(array $req, array $decl): array
             $name = acts($decl['type'])[$a][0];
             if (!isset($reqActs[$a])) { $free[] = $name; continue; }
             [$lr, $sr] = $reqActs[$a];
-            $over = $l > $lr || ($l >= SCOPE_FROM && ($lr < SCOPE_FROM || $s > $sr));
-            $checks[] = [$over ? 'fail' : 'ok', t($over ? 'cmp_act_over' : 'cmp_act_ok', $name, act_part($a, $l, $s), act_part($a, $lr, $sr))];
+            // Se citan las opciones tal como aparecen en el formulario.
+            if ($l > $lr) {
+                $checks[] = ['fail', t('cmp_act_over', $name, act_part($a, $l, $s), levels()[$lr], levels()[$l])];
+            } elseif ($l >= SCOPE_FROM && $s > $sr) {
+                $checks[] = ['fail', t('cmp_scope_over', $name, act_part($a, $l, $s), mb_strtolower(scope_labels()[$sr]), mb_strtolower(scope_labels()[$s]))];
+            } else {
+                $checks[] = ['ok', t('cmp_act_ok', $name, act_part($a, $l, $s), act_part($a, $lr, $sr))];
+            }
         }
         if ($free) $checks[] = ['info', t('cmp_act_free', implode(', ', $free))];
     }
@@ -55,7 +61,7 @@ function oride_compare(array $req, array $decl): array
             $d = ig_percent($igDecl);
             $m = ig_percent(['IG' => [$max, $max]]);
             if ($igDecl['IG'][1] <= $max + 1e-9) $checks[] = ['ok', t('cmp_ig_ok', $d, $m)];
-            elseif ($igDecl['IG'][0] > $max + 1e-9) $checks[] = ['fail', t('cmp_ig_over', $d, $m)];
+            elseif ($igDecl['IG'][0] > $max + 1e-9) $checks[] = ['fail', t('cmp_ig_over', $d, $m) . ig_raisers($decl, $igDecl)];
             else $checks[] = ['unknown', t('cmp_ig_overlap', $d, $m)];
         }
     }
@@ -63,4 +69,18 @@ function oride_compare(array $req, array $decl): array
     $states = array_column($checks, 0);
     $verdict = in_array('fail', $states, true) ? 'fail' : (in_array('unknown', $states, true) ? 'unknown' : 'ok');
     return ['verdict' => $verdict, 'checks' => $checks];
+}
+
+/** Qué actividades elevan más el índice de una declaración (generativas primero). */
+function ig_raisers(array $r, array $ig): string
+{
+    $parts = [];
+    $rows = $ig['rows'];
+    usort($rows, fn($a, $b) => [$b['role'] === 'gen', ($b['contrib'][1] ?? 0) + $b['factor']] <=> [$a['role'] === 'gen', ($a['contrib'][1] ?? 0) + $a['factor']]);
+    foreach ($rows as $row) {
+        if ($row['factor'] <= 0) continue;
+        $parts[] = acts($r['type'])[$row['act']][0] . ' (' . act_part($row['act'], $row['level'], $row['scope']) . ')';
+        if (count($parts) === 2) break;
+    }
+    return $parts ? ' ' . t('cmp_ig_why', implode(', ', $parts)) : '';
 }
