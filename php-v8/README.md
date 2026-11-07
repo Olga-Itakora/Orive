@@ -86,7 +86,6 @@ documentacion.php    Documentación: cómo funcionan el código y el índice, en
 preguntas.php        Redirige a documentacion.php#preguntas
 marco-normativo.php  Redirige a documentacion.php#preguntas (el artículo 50 está en las preguntas)
 comprobar.php        Instituciones › Verificar una entrega
-marco-normativo.php  Artículo 50 del Reglamento de IA
 legal.php            Aviso legal y privacidad
 mejora.php           ¿Cómo puede mejorar el Código ORIDE?
 sobre.php            Sobre este sitio
