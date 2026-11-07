@@ -58,7 +58,7 @@ P  = min(1, Σ w · f(H) · S)          actividades auxiliares
 
 - Factores f(H) por grado de uso: 0 → 0 · 1 → 0 · 2 → 0,20 · 3 → 0,50 · 4 → 0,85 · 5 → 1,00.
 - El alcance (S) del Código ORIDE son tramos de porcentaje (0–4); se usa el intervalo de cada tramo, no s/5, y el índice se da como intervalo.
-- q: pregunta opcional del formulario («¿Qué proporción aproximada del contenido final procede de material generado mediante IA?», siete tramos y un porcentaje exacto opcional). Si no se responde, se usa el alcance declarado de la actividad generativa.
+- q: proporción del contenido final generada con IA. El formulario ya no la pregunta: se usa el alcance declarado de la actividad generativa. El motor sigue aceptando `q` y `qp` en los enlaces antiguos.
 - Pesos por disciplina en `IG_VERSIONS`: los de literatura son los de la especificación; los demás, provisionales por analogía (techo auxiliar 0,50), cada uno con su justificación.
 - No calculable si hay IA pero no se detallan actividades, o si todas están a 0. Sin IA, 0.
 - Cada cambio de factores o pesos exige una versión nueva. El enlace a un código lleva la versión (`ig=…`) y la respuesta a la pregunta de proporción (`q=…` o `qp=…`), y `calc.php?code=…&format=json` descarga el cálculo completo (versión, parámetros, valores y fecha). El sitio no guarda declaraciones.
@@ -68,11 +68,25 @@ P  = min(1, Σ w · f(H) · S)          actividades auxiliares
 
 `oride.php?LI-IA1-EV1-DOC44-GEN24` explica el código en frases sencillas, con su Índice Global ORIDE. Admite cualquier combinación válida, las actividades en cualquier orden, minúsculas, «:» en lugar de guiones, `V` como `V1` y omitir `IA1` si siguen actividades (`oride.php?LI:DOC44-GEN24-EV`). Si el código no es válido, explica el error.
 
-### Instituciones
+### Instituciones y verificador (ORIDE-VERIFY-1.1)
 
-`instituciones.php` usa el mismo formulario para fijar un uso máximo de IA, con su Índice Global máximo. `comprobar.php` verifica si el código declarado por una persona autora supera el requisito: tipo de obra, uso de IA, evidencias, grado y alcance de cada actividad limitada e Índice Global (`includes/compare.php`). El código va precedido de «El autor debe garantizar que el uso de la IA que hace no supera el siguiente código:».
+`instituciones.php` usa el mismo formulario para crear un requisito (uso máximo de IA). La caja muestra el «Índice global de referencia» del requisito: es una estimación, no un límite. El botón y la pestaña «Verificar una entrega» llevan el código a `comprobar.php`.
 
-Los formularios no muestran códigos en las preguntas ni en las opciones: el código aparece solo en la caja.
+`comprobar.php` compara un requisito y una declaración (`includes/compare.php`, separado de la interfaz y sin fórmulas propias: usa `ig_act_contrib()` e `ig_from_result()` del índice). Reglas:
+
+1. **Validación de cada código**: válido, de una versión anterior (se lee con el formato actual), incompleto (sin EV) o no válido. Si la declaración es contradictoria (IA1 con todas las actividades a 0), no hay resultado definitivo. El alcance 0 significa «menos del 5 %», no «sin alcance»: `GEN30` es válido.
+2. **Tipo de obra, IA y evidencias**: distinto tipo → no compatible; requisito IA0 y declaración IA1 → no compatible; requisito EV1 exige EV1.
+3. **Actividades**, por su identificador:
+   - modo «cada cifra por separado» (predeterminado): grado declarado ≤ grado permitido y, desde el grado 2, alcance declarado ≤ alcance permitido;
+   - modo «contribución ponderada»: contribución declarada ≤ contribución máxima del requisito (misma fórmula que el índice); permite compensar grado y alcance dentro de una actividad.
+   - Actividades declaradas que el requisito no menciona: permitidas sin límite específico (predeterminado), no permitidas o requieren revisión.
+   - Actividades del requisito que no aparecen en la declaración: requieren revisión (predeterminado; no se supone 0) o se entiende que no se usó IA.
+4. **Límite global** (opcional y explícito): índice declarado (el que se muestra, en enteros) frente al máximo fijado. Máximo del intervalo ≤ límite → cumple; mínimo > límite → no cumple; a ambos lados → indeterminado. El índice estimado del requisito no se usa como límite por sí solo.
+5. **Resultado**: cualquier incumplimiento → «No compatible con los límites declarados»; si no, cualquier duda → «No es posible determinar la compatibilidad»; si no, «Compatible con los requisitos ORIDE». Un código que no se puede leer → «Código no válido». El índice global nunca compensa una actividad que no cumple.
+
+La política se guarda en la URL (`mode=weighted`, `g=1&gl=20`, `unspec=forbid|review`, `absent=unused`), así que se puede compartir.
+
+Cambios respecto al verificador anterior: el índice del requisito ya no se usa automáticamente como límite (ahora el límite global hay que fijarlo); las actividades del requisito que faltan en la declaración pasan a «requieren revisión» por defecto.
 
 ## Ficheros
 

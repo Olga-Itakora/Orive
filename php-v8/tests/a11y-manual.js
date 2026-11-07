@@ -4,7 +4,7 @@
 const { chromium } = require('playwright');
 const B = process.env.ORIDE_URL || 'http://127.0.0.1:8097/';
 const pages = ['', 'que-es.php', 'como-funciona.php', 'crear.php?type=LI&ia=si&ev=si&acts_LI[]=GEN&u_LI_GEN=4&s_LI_GEN=3',
-  'instituciones.php?type=SC&ia=si&ev=si', 'comprobar.php?r=SC-IA1-EV1-RED31&d=SC-IA1-EV0-RED51', 'documentacion.php', 'codigo.php',
+  'instituciones.php?type=SC&ia=si&ev=si', 'comprobar.php?r=SC-IA1-EV1-RED31&d=SC-IA1-EV0-RED51', 'comprobar.php?r=LI-IA1-EV1-GEN24-DOC44&d=LI-IA1-EV1-GEN30-EST54&mode=weighted&g=1&gl=20', 'documentacion.php', 'codigo.php',
   'indice.php', 'oride.php?LI-IA1-EV1-DOC44-GEN24', 'sobre.php', 'legal.php', 'mejora.php'];
 let fails = 0;
 const bad = (m) => { fails++; console.log('  ✗ ' + m); };

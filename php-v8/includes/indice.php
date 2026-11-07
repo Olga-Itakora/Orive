@@ -279,17 +279,14 @@ function ig_from_result(array $r, array $extra = []): array
 
     $gen = $aux = $rows = [];
     foreach ($r['acts'] as [$act, $level, $scope]) {
-        if (!isset($weights[$act]) || !isset($cfg['factors'][$level])) return ['reason' => 'config'] + $out;
-        [$role, $w] = $weights[$act];
-        $f = $cfg['factors'][$level];
-        $S = $scope === null ? [0.0, 0.0] : $cfg['scope'][$scope];
-        $row = ['act' => $act, 'role' => $role, 'level' => $level, 'scope' => $scope, 'factor' => $f, 'S' => $S, 'weight' => $w, 'contrib' => null];
-        if ($role === 'gen') {
-            $gen[$act] = ['f' => $f, 'S' => $S, 'scope' => $scope];
+        $c = ig_act_contrib($r['type'], $act, $level, $scope, $version);
+        if ($c === null) return ['reason' => 'config'] + $out;
+        $row = ['act' => $act, 'role' => $c['role'], 'level' => $level, 'scope' => $scope, 'factor' => $c['f'], 'S' => $c['S'], 'weight' => $c['w'], 'contrib' => null];
+        if ($c['role'] === 'gen') {
+            $gen[$act] = ['f' => $c['f'], 'S' => $c['S'], 'scope' => $scope];
         } else {
-            if ($w === null) return ['reason' => 'config'] + $out;
-            $aux[$act] = ['w' => $w, 'f' => $f, 'S' => $S];
-            $row['contrib'] = [$w * $f * $S[0], $w * $f * $S[1]];
+            $aux[$act] = ['w' => $c['w'], 'f' => $c['f'], 'S' => $c['S']];
+            $row['contrib'] = $c['value'];
         }
         $rows[] = $row;
     }
@@ -320,6 +317,26 @@ function ig_from_result(array $r, array $extra = []): array
     }
     $P = ig_p($aux);
     return ['status' => 'ok', 'G' => $G, 'P' => $P, 'IG' => ig_combine_range($G, $P), 'rows' => $rows] + $out;
+}
+
+/**
+ * Contribución de una actividad según la metodología (la usan el índice y el verificador).
+ *  - auxiliar: w · f(H) · S        (lo que aporta a P)
+ *  - generativa: f(H) · S          (lo que aporta a G/100 si fuera la única actividad generativa)
+ * @return array{role:string, w:?float, f:float, S:array{0:float,1:float}, value:array{0:float,1:float}}|null
+ *   null si la versión, la actividad o el grado no están en la configuración.
+ */
+function ig_act_contrib(string $type, string $act, int $level, ?int $scope, ?string $version = null): ?array
+{
+    $cfg = ig_config($version);
+    $wt = $cfg['weights'][$type]['acts'][$act] ?? null;
+    if (!$cfg || !$wt || !isset($cfg['factors'][$level])) return null;
+    [$role, $w] = $wt;
+    if ($role !== 'gen' && $w === null) return null;
+    $f = $cfg['factors'][$level];
+    $S = $scope === null ? [0.0, 0.0] : $cfg['scope'][$scope];
+    $k = $role === 'gen' ? $f : $w * $f;
+    return ['role' => $role, 'w' => $w, 'f' => $f, 'S' => $S, 'value' => [$k * $S[0], $k * $S[1]]];
 }
 
 /** Registro completo del cálculo, para descargar y conservar (JSON). */

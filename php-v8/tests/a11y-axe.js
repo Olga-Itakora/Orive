@@ -9,7 +9,7 @@ const pages = [
   '', 'que-es.php', 'como-funciona.php', 'crear.php',
   'crear.php?type=LI&ia=si&ev=si&acts_LI[]=GEN&u_LI_GEN=4&s_LI_GEN=3&acts_LI[]=DOC&u_LI_DOC=0',
   'instituciones.php', 'instituciones.php?type=SC&ia=si&ev=si&acts_SC[]=RED&u_SC_RED=3&s_SC_RED=1',
-  'comprobar.php', 'comprobar.php?r=SC-IA1-EV1-RED31&d=SC-IA1-EV0-RED51', 'comprobar.php?r=x&d=y',
+  'comprobar.php', 'comprobar.php?r=SC-IA1-EV1-RED31&d=SC-IA1-EV0-RED51', 'comprobar.php?r=x&d=y', 'comprobar.php?r=LI-IA1-EV1-GEN24-DOC44&d=LI-IA1-EV1-GEN30-EST54&mode=weighted&g=1&gl=20&unspec=review',
   'documentacion.php', 'codigo.php', 'indice.php', 'oride.php?LI-IA1-EV1-DOC44-GEN24', 'oride.php?zzz',
   'sobre.php', 'legal.php', 'mejora.php',
 ];

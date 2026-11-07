@@ -154,6 +154,8 @@
       bc.setAttribute("data-copy-code", d.copy.code);
       bt.setAttribute("data-copy-text", d.copy.text);
       bl.setAttribute("data-copy-link", d.copy.link);
+      var vt = $("[data-verify-tab]");
+      if (vt) vt.setAttribute("href", d.verifyUrl || vt.getAttribute("href").replace(/\?r=[^&]*&?/, "?"));
       var vf = $("[data-verify]", box);
       if (vf) {
         if (d.verifyUrl) { vf.setAttribute("href", d.verifyUrl); vf.removeAttribute("aria-disabled"); }

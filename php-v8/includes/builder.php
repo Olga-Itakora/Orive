@@ -82,14 +82,8 @@ function builder_form(string $mode, array $in, string $action): string
     $r = oride_compute($in);
     $html .= '<div class="alert alert-warn" data-allzero-form' . ($r['all_zero'] ? '' : ' hidden') . '>' . h(t('all_zero')) . '</div>';
 
-    // Pregunta adicional para el Índice Global ORIDE: solo si hay generación de contenido con IA.
-    if (!$inst) {
-        $showQ = ig_from_result($r, $in)['needs_q'];
-        $q = (string) ($in['q'] ?? '');
-        $html .= '<fieldset class="choices q" data-showq' . ($showQ ? '' : ' hidden') . '><legend>' . h(t('q_question')) . '</legend><p class="hint">' . h(t('q_hint')) . '</p><div class="choice-list">';
-        foreach (STR[lang()]['q_bands'] as $n => $label) $html .= choice('q', (string) $n, 'radio', $q === (string) $n, h($label));
-        $html .= '</div><div class="field qp-field"><label for="qp">' . h(t('qp_label')) . '</label><input id="qp" name="qp" type="number" min="0" max="100" step="0.1" inputmode="decimal" value="' . h((string) ($in['qp'] ?? '')) . '"><span class="qp-unit">%</span></div></fieldset>';
-    }
+    // La pregunta adicional de proporción (q) ya no se hace en el formulario: el índice usa el alcance
+    // declarado. Los enlaces antiguos con q o qp se siguen respetando (ig_from_result).
     $html .= '</div>';
 
     $html .= '<div class="no-js-only"><button class="btn btn-primary">' . h(tr('Continuar y ver el código', 'Continue and see the code')) . '</button></div>';
@@ -105,9 +99,12 @@ function inst_intro(): string
 /** Pestañas de Instituciones: crear un requisito / verificar una entrega. */
 function inst_tabs(string $current): string
 {
-    $tabs = ['instituciones.php' => tr('Crear un requisito', 'Create a requirement'), 'comprobar.php' => t('cmp_title')];
+    // La pestaña «Verificar una entrega» lleva el código del requisito si ya se ha creado (oride.js la actualiza).
+    $r = $current === 'instituciones.php' ? oride_compute(oride_input_from_get()) : null;
+    $verify = 'comprobar.php' . ($r && $r['status'] === 'complete' ? '?r=' . rawurlencode($r['code']) : '');
+    $tabs = ['instituciones.php' => [tr('Crear un requisito', 'Create a requirement'), 'instituciones.php', ''], 'comprobar.php' => [t('cmp_title'), $verify, ' data-verify-tab']];
     $html = '<nav class="tabs" aria-label="' . h(t('nav_inst')) . '"><ul>';
-    foreach ($tabs as $href => $label) $html .= '<li><a href="' . u($href) . '"' . ($href === $current ? ' aria-current="page"' : '') . '>' . h($label) . '</a></li>';
+    foreach ($tabs as $key => [$label, $href, $attr]) $html .= '<li><a href="' . u($href) . '"' . $attr . ($key === $current ? ' aria-current="page"' : '') . '>' . h($label) . '</a></li>';
     return $html . '</ul></nav>';
 }
 

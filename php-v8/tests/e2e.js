@@ -64,7 +64,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.check('input[name=s_LI_DOC][value="4"]');
   ok('código en dos líneas', (await waitCode('LI-IA1-EV1DOC44-GEN24')) === 'LI-IA1-EV1DOC44-GEN24' && JSON.stringify(await lines()) === JSON.stringify(['LI-IA1-EV1', 'DOC44-GEN24']));
   ok('sin aviso cuando hay uso real', !(await page.isVisible('[data-allzero]')));
-  ok('aparece la pregunta de proporción (hay generación)', await page.isVisible('[data-showq]'));
+  ok('sin la pregunta de proporción', (await page.locator('[data-showq]').count()) === 0 && !(await page.locator('main').innerText()).includes('¿Qué proporción aproximada'));
   ok('índice entero, como intervalo (alcance en tramos)', (await igIs('18–23 %')) === '18–23 %', await ig());
   ok('caja «Declaración ORIDE» con la caja «Código» y, debajo, la caja «Índice global»', (await page.locator('#decl-title').textContent()) === 'Declaración ORIDE' && (await page.locator('.code-box .hl-head').textContent()) === 'Código' && (await page.locator('.ig-box .hl-head').textContent()) === 'Índice global' && await page.evaluate(() => document.querySelector('.code-box').getBoundingClientRect().bottom <= document.querySelector('.ig-box').getBoundingClientRect().top));
   ok('copiar código dentro de la caja «Código»', await page.locator('.code-box [data-copy-code]').count() === 1);
@@ -72,12 +72,6 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.click('.code-details summary');
   ok('al abrir el desglose del código se ve la explicación', (await page.locator('[data-explain]').innerText()).includes('Literatura'));
   ok('caja del índice en otro color', await page.evaluate(() => getComputedStyle(document.querySelector('.ig-box')).backgroundColor !== getComputedStyle(document.querySelector('.decl-box')).backgroundColor));
-  await page.check('input[name=q][value="6"]');
-  ok('con «La totalidad»: 23 %', (await igIs('23 %')) === '23 %', await ig());
-  await page.fill('#qp', '100');
-  await page.waitForFunction(() => /qp=100/.test(location.search), null, { timeout: 3000 }).catch(() => {});
-  ok('porcentaje exacto en la URL', page.url().includes('qp=100'));
-  await igIs('23 %');
   ok('la descarga JSON no se ve hasta abrir el desglose', !(await page.isVisible('.ig-box a[href*="format=json"]')));
   ok('sin el texto explicativo largo en la caja', !(await page.locator('.decl-box').innerText()).includes('No representa un porcentaje certificado'));
   await page.click('.ig-details summary');
@@ -86,14 +80,14 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   ok('desglose con G, P, pesos, factores, alcance, valor exacto y versión', ['Generación efectiva (G)', 'Influencia auxiliar (P)', 'peso 0,05', 'factor 0,2', 'alcance 75–100 %', 'Valor sin redondear', 'ORIDE-IG-1.0-experimental'].every(t => breakdown.includes(t)), breakdown.slice(0, 200));
   await page.click('[data-copy-index]');
   ok('copiar el índice', await copied(page, '[data-copy-index]'));
-  ok('el índice copiado', (await page.getAttribute('[data-copy-index]', 'data-copy-index')) === 'Índice Global ORIDE: 23 % (ORIDE-IG-1.0-experimental)');
+  ok('el índice copiado', (await page.getAttribute('[data-copy-index]', 'data-copy-index')) === 'Índice Global ORIDE: 18–23 % (ORIDE-IG-1.0-experimental)');
   await page.click('[data-copy-code]');
   ok('copiar código', await copied(page, '[data-copy-code]'));
   ok('el código copiado tiene dos líneas', (await page.getAttribute('[data-copy-code]', 'data-copy-code')) === 'ORIDE LI-IA1-EV1\nDOC44-GEN24');
   const text = await page.getAttribute('[data-copy-text]', 'data-copy-text');
-  ok('la declaración copiada incluye el índice', text.includes('Índice Global ORIDE: 23 % (ORIDE-IG-1.0-experimental)'), text.split('\n').slice(-2).join(' / '));
+  ok('la declaración copiada incluye el índice', text.includes('Índice Global ORIDE: 18–23 % (ORIDE-IG-1.0-experimental)'), text.split('\n').slice(-2).join(' / '));
   const link = await page.getAttribute('[data-copy-link]', 'data-copy-link');
-  ok('el enlace lleva el código, la proporción y la versión', /oride\.php\?LI-IA1-EV1-DOC44-GEN24&ig=1\.0-experimental&qp=100&lang=es$/.test(link), link);
+  ok('el enlace lleva el código, la proporción y la versión', /oride\.php\?LI-IA1-EV1-DOC44-GEN24&ig=1\.0-experimental&lang=es$/.test(link), link);
   await page.screenshot({ path: out + '/01-crear.png', fullPage: true });
 
   // La página enlazada reproduce el mismo índice
@@ -109,7 +103,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
 
   // Sin JavaScript y navegador = servidor
   const nojs = await newPage({ javaScriptEnabled: false });
-  await nojs.goto(B + 'crear.php?lang=es&type=LI&ia=si&ev=si&acts_LI[]=DOC&u_LI_DOC=4&s_LI_DOC=4&acts_LI[]=GEN&u_LI_GEN=2&s_LI_GEN=4&qp=100');
+  await nojs.goto(B + 'crear.php?lang=es&type=LI&ia=si&ev=si&acts_LI[]=DOC&u_LI_DOC=4&s_LI_DOC=4&acts_LI[]=GEN&u_LI_GEN=2&s_LI_GEN=4');
   ok('sin JavaScript el servidor da el mismo código e índice', (await code(nojs)) === 'LI-IA1-EV1DOC44-GEN24' && (await ig(nojs)) === indexInForm);
   const types = { SC: ['DOC', 'HIP', 'MET', 'DAT', 'ANA', 'INT', 'RED', 'REV', 'FOR'], MU: ['IDE', 'COM', 'ARR', 'GEN', 'INT', 'MIX', 'MAS', 'RES'], PH: ['PLA', 'CAP', 'REV', 'RET', 'MOD', 'GEN', 'REC'], IL: ['REF', 'IDE', 'COM', 'GEN', 'TRA', 'RET', 'AMP', 'VAR', 'REV', 'FIN'], AU: ['GUI', 'STO', 'GEN', 'VOZ', 'MON', 'EFX', 'DOB', 'POS'], TR: ['DOC', 'INT', 'GEN', 'ADA', 'REV', 'STY', 'LOC', 'VAL'] };
   let same = 0, n = 30;
@@ -129,7 +123,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   ok(`navegador y servidor coinciden en ${n} combinaciones (código e índice)`, same === n, same + '/' + n);
 
   // Descarga del cálculo
-  const rec = await (await page.request.get(B + 'calc.php?code=LI-IA1-EV1-DOC44-GEN24&qp=100&format=json')).json();
+  const rec = await (await page.request.get(B + 'calc.php?code=LI-IA1-EV1-DOC44-GEN24&format=json')).json();
   ok('descarga JSON con versiones, parámetros y resultado sin redondear', rec.algorithm === 'ORIDE-IG-1.0-experimental' && rec.taxonomy === 'ORIDE Code 3.0' && rec.parameters.factors && Math.abs(rec.result.IG[1] - 23.4) < 0.01);
 
   // Documentación y subpáginas con miga de pan
@@ -164,8 +158,13 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.check('input[name=u_SC_RED][value="3"]');
   await page.check('input[name=s_SC_RED][value="1"]');
   ok('instituciones: código de referencia en dos líneas', (await waitCode('SC-IA1-EV1RED31')) === 'SC-IA1-EV1RED31');
-  ok('instituciones: caja «Requisito ORIDE» con el Índice global máximo', (await page.locator('#decl-title').textContent()) === 'Requisito ORIDE' && (await page.locator('.ig-box .ig-head').textContent()).includes('Índice global máximo') && /%$/.test(await igIs('3–13 %')));
-  ok('instituciones: el texto copiado incluye el índice máximo', (await page.getAttribute('[data-copy-text]', 'data-copy-text')).includes('Índice Global ORIDE máximo: 3–13 %'));
+  ok('instituciones: caja «Requisito ORIDE» con el Índice global de referencia', (await page.locator('#decl-title').textContent()) === 'Requisito ORIDE' && (await page.locator('.ig-box .ig-head').textContent()) === 'Índice global de referencia' && /%$/.test(await igIs('3–13 %')));
+  ok('instituciones: el texto copiado incluye el índice de referencia', (await page.getAttribute('[data-copy-text]', 'data-copy-text')).includes('Índice Global ORIDE de referencia: 3–13 %'));
+  ok('la pestaña «Verificar una entrega» lleva el código del requisito', /comprobar\.php\?r=SC-IA1-EV1-RED31/.test(await page.getAttribute('[data-verify-tab]', 'href')));
+  await page.click('[data-verify-tab]');
+  ok('al pulsar la pestaña, el primer campo se rellena con el código', page.url().includes('comprobar.php') && (await page.inputValue('#r')) === 'SC-IA1-EV1-RED31');
+  await page.goBack();
+  await waitCode('SC-IA1-EV1RED31');
   ok('instituciones: botón «Verificar una entrega» con el código', /comprobar\.php\?r=SC-IA1-EV1-RED31/.test(await page.getAttribute('[data-verify]', 'href')));
   await page.click('[data-verify]');
   ok('el botón lleva a la pestaña de verificación con el primer campo relleno', page.url().includes('comprobar.php') && (await page.inputValue('#r')) === 'SC-IA1-EV1-RED31');
@@ -173,14 +172,28 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.goto(B + 'instituciones.php');
   ok('Instituciones: texto nuevo', (await page.locator('.inst-head').innerText()).includes('Una forma clara y sencilla de incorporar criterios de uso de IA'));
   ok('pestañas sin desplazamiento (sin flechas)', await page.evaluate(() => getComputedStyle(document.querySelector('.tabs')).overflowX === 'visible'));
+  ok('listado de entidades sin aspecto de botón y separado de las pestañas', await page.evaluate(() => { const li = document.querySelector('.who-list li'), cs = getComputedStyle(li); const gap = document.querySelector('.tabs').getBoundingClientRect().top - document.querySelector('.who-list').getBoundingClientRect().bottom; return cs.borderTopWidth === '0px' && cs.backgroundColor === 'rgba(0, 0, 0, 0)' && gap >= 24; }));
   await page.click('.tabs a[href*="comprobar.php"]');
   await page.fill('#r', 'SC-IA1-EV1-RED31');
   await page.fill('#d', 'SC-IA1-EV1\nRED51');
   await page.click('main form button.btn-primary');
-  ok('verificar: no cumple y explica por qué con las opciones del formulario', (await page.locator('.cmp-result h2').innerText()) === 'No cumple el requisito' && (await page.locator('.cmp-checks').innerText()).includes('se pide como máximo «Transformé sustancialmente los resultados», pero la persona autora ha señalado «Incorporé los resultados prácticamente sin cambios»'));
+  ok('verificar: no compatible y explica por qué en la tabla', (await page.locator('#vf-verdict').innerText()).includes('No compatible con los límites declarados') && (await page.locator('.vf-table').innerText()).includes('Se pide como máximo «Transformé sustancialmente los resultados», pero la persona autora ha señalado «Incorporé los resultados prácticamente sin cambios».'));
+  const summary = await page.locator('.vf-summary').innerText();
+  ok('verificar: resumen con requisito, declaración, modalidad, índices y resultado', ['Requisito ORIDE', 'Declaración ORIDE', 'Modalidad', 'Índice global de referencia del requisito', 'Índice global declarado', 'Resultado'].every(t => summary.includes(t)));
+  ok('verificar: nota de que ORIDE no verifica la veracidad', (await page.locator('.vf-note').innerText()).includes('ORIDE no verifica de manera independiente la veracidad'));
+  ok('opciones de comparación plegadas por defecto', !(await page.evaluate(() => document.querySelector('.vf-options').open)));
   await page.fill('#d', 'SC-IA1-EV1-RED21');
   await page.click('main form button.btn-primary');
-  ok('verificar: cumple si está por debajo', (await page.locator('.cmp-result h2').innerText()) === 'Cumple el requisito');
+  ok('verificar: compatible si está por debajo', (await page.locator('#vf-verdict').innerText()).includes('Compatible con los requisitos ORIDE'));
+  // Caso especial: GEN24 frente a GEN30, en las tres modalidades
+  await page.goto(B + 'comprobar.php?r=LI-IA1-EV1-GEN24&d=LI-IA1-EV1-GEN30&g=1&gl=20');
+  ok('GEN24/GEN30 con límite global 20 %: no compatible, aunque el índice sea inferior', (await page.locator('#vf-verdict').innerText()).includes('No compatible') && (await page.locator('.vf-explain').innerText()).includes('la actividad GEN supera el máximo permitido en el grado de incorporación de resultados de IA'));
+  await page.evaluate(() => { document.querySelector('.vf-options').open = true; });
+  await page.check('input[name=mode][value=weighted]');
+  await page.click('main form button.btn-primary');
+  ok('GEN24/GEN30 en modo ponderado: compatible', (await page.locator('#vf-verdict').innerText()).includes('Compatible con los requisitos ORIDE') && page.url().includes('mode=weighted'));
+  await page.goto(B + 'comprobar.php?r=IL-IA1-EV1-REF10-RET10&d=IL-IA1-EV1-REF10-RET40');
+  ok('RET10/RET40: no compatible por el grado de RET', (await page.locator('#vf-verdict').innerText()).includes('No compatible') && (await page.locator('.vf-row-fail th').innerText()).includes('RET'));
   await page.screenshot({ path: out + '/03-verificar.png', fullPage: true });
   ok('menú: Instituciones activo en Verificar', (await page.locator('header [aria-current="page"]').innerText()) === 'Instituciones');
 

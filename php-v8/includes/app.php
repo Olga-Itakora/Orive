@@ -241,11 +241,12 @@ function oride_normalize(string $s): string
 function oride_explain(string $raw): array
 {
     $code = oride_normalize($raw);
-    $out = ['valid' => false, 'code' => $code, 'error' => null, 'result' => null];
+    $out = ['valid' => false, 'code' => $code, 'error' => null, 'result' => null, 'legacy' => false, 'incomplete' => false];
     $tok = $code === '' ? [] : explode('-', $code);
     if (count($tok) < 2) return ['error' => t('err_form')] + $out;
     $type = array_shift($tok);
-    $type = LEGACY_TYPES[$type] ?? $type; // LIT → LI, SCI → SC…
+    $legacy = isset(LEGACY_TYPES[$type]) && LEGACY_TYPES[$type] !== $type; // LIT → LI, SCI → SC…
+    $type = LEGACY_TYPES[$type] ?? $type;
     if (!isset(WORK_TYPES[$type])) return ['error' => t('err_type', $type)] + $out;
     // Si tras el tipo vienen directamente actividades o evidencias, se entiende IA1 (LI:DOC44-EV).
     $ia = preg_match('/^IA[01]$/', $tok[0] ?? '') ? array_shift($tok) : ($tok && preg_match('/^([A-Z]{3}\d*|E?V[01]?)$/', $tok[0]) ? 'IA1' : array_shift($tok));
@@ -253,11 +254,13 @@ function oride_explain(string $raw): array
     $ev = '';
     $isV = fn($x) => (bool) preg_match('/^E?V[01]?$/', $x); // EV0/EV1; V0/V1 de versiones anteriores
     if ($tok && $isV($tok[0])) $ev = array_shift($tok);          // formato actual: tríada
-    elseif ($tok && $isV(end($tok))) $ev = array_pop($tok);      // formato anterior: V al final
+    elseif ($tok && $isV(end($tok))) { $ev = array_pop($tok); $legacy = true; } // formato anterior: V al final
+    if ($ev !== '' && $ev[0] === 'V') $legacy = true;               // V0/V1 de versiones anteriores
+    $incomplete = $ev === '';                                       // sin evidencias (códigos anteriores a la tríada)
     $ev = $ev === '' ? '' : (substr($ev, -1) === '0' ? 'no' : 'si'); // «EV» o «V» solos equivalen a EV1
     if ($ia === 'IA0') {
         if ($tok) return ['error' => t('err_ia0_extra')] + $out;
-        return ['valid' => true, 'result' => oride_compute(['type' => $type, 'ia' => 'no', 'ev' => $ev, 'require_ev' => false])] + $out;
+        return ['valid' => true, 'legacy' => $legacy, 'incomplete' => $incomplete, 'result' => oride_compute(['type' => $type, 'ia' => 'no', 'ev' => $ev, 'require_ev' => false])] + $out;
     }
     $acts = $u = $s = [];
     foreach ($tok as $t) {
@@ -275,7 +278,7 @@ function oride_explain(string $raw): array
         if (needs_scope($level)) $s[$act] = (string) $scope;
     }
     $r = oride_compute(['type' => $type, 'ia' => 'si', 'acts' => $acts, 'u' => $u, 's' => $s, 'ev' => $ev, 'require_ev' => false]);
-    return ['valid' => true, 'result' => $r] + $out;
+    return ['valid' => true, 'legacy' => $legacy, 'incomplete' => $incomplete, 'result' => $r] + $out;
 }
 
 /** $reader: en impersonal, para quien lee el código (oride.php e instituciones). */
