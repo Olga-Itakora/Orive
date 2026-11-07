@@ -741,3 +741,13 @@ textarea.mono { font-family: var(--mono); text-transform: uppercase; }
   .vf-table th:first-child { width: 18%; }
   .vf-table th:last-child { width: 24%; }
 }
+/* Pantallas estrechas: cada actividad es una tarjeta (sin desplazamiento horizontal). */
+@media (max-width: 639px) {
+  .vf-table, .vf-table tbody, .vf-table tr, .vf-table th, .vf-table td { display: block; width: 100%; }
+  .vf-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+  .vf-table tr { border: 1px solid var(--line); border-radius: var(--r-sm); margin-bottom: 8px; background: var(--surface); }
+  .vf-table th, .vf-table td { border: 0; border-bottom: 1px solid var(--line); }
+  .vf-table tr > :last-child { border-bottom: 0; }
+  .vf-table td::before { content: attr(data-label); display: block; font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+  .vf-table caption { display: block; }
+}

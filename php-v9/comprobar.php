@@ -87,14 +87,14 @@ page_start(t('cmp_title'), tr('Comprueba si el Código ORIDE de una entrega es c
                     <tr class="vf-row-<?= $row['state'] ?>">
                       <th scope="row"><span class="mono"><?= h($row['act']) ?></span><br><?= h($row['name']) ?></th>
                       <?php if ($mode === 'weighted'): ?>
-                        <td><?= $row['contrib'] ? h(num_range($row['contrib'][0], 3) . ' / ' . num_range($row['contrib'][1], 3)) : '—' ?></td>
+                        <td data-label="<?= h(t('vf_t_w')) ?>"><?= $row['contrib'] ? h(num_range($row['contrib'][0], 3) . ' / ' . num_range($row['contrib'][1], 3)) : '—' ?></td>
                       <?php else: ?>
-                        <td><?= h($level($row['req'])) ?></td>
-                        <td class="vf-cell-<?= $row['level'] ?>"><?= h($level($row['decl'])) ?></td>
-                        <td><?= h($scope($row['req'])) ?></td>
-                        <td class="vf-cell-<?= $row['scope'] ?>"><?= h($scope($row['decl'])) ?></td>
+                        <td data-label="<?= h(t('vf_t_lr')) ?>"><?= h($level($row['req'])) ?></td>
+                        <td data-label="<?= h(t('vf_t_ld')) ?>" class="vf-cell-<?= $row['level'] ?>"><?= h($level($row['decl'])) ?></td>
+                        <td data-label="<?= h(t('vf_t_sr')) ?>"><?= h($scope($row['req'])) ?></td>
+                        <td data-label="<?= h(t('vf_t_sd')) ?>" class="vf-cell-<?= $row['scope'] ?>"><?= h($scope($row['decl'])) ?></td>
                       <?php endif; ?>
-                      <td><span class="vf-state"><span aria-hidden="true"><?= $icons[$row['state']] ?></span> <?= h($stateLabel($row['state'])) ?></span><br><span class="vf-why"><?= h($row['reason']) ?></span></td>
+                      <td data-label="<?= h(t('vf_t_res')) ?>"><span class="vf-state"><span aria-hidden="true"><?= $icons[$row['state']] ?></span> <?= h($stateLabel($row['state'])) ?></span><br><span class="vf-why"><?= h($row['reason']) ?></span></td>
                     </tr>
                   <?php endforeach; ?>
                 </tbody>

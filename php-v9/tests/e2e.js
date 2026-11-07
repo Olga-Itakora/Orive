@@ -280,6 +280,8 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
     if (sw > 375) ok('móvil sin desbordar: ' + (p || 'inicio'), false, sw + 'px');
   }
   ok('móvil revisado', true);
+  await mob.goto(B + 'comprobar.php?r=LI-IGC-EV1-GEN24-DOC44-EST54&d=LI-IGB-EV1-GEN30-DOC20-IDE32-EST54&mode=digits');
+  ok('móvil: la tabla de actividades se muestra como tarjetas, sin desplazamiento horizontal', await mob.evaluate(() => { const r = document.querySelector('.table-scroll'); return r.scrollWidth <= r.clientWidth && getComputedStyle(document.querySelector('.vf-table td')).display === 'block'; }));
   await mob.goto(B + 'crear.php?type=IL&ia=si&ev=si&acts_IL[]=GEN&u_IL_GEN=3&s_IL_GEN=2');
   await mob.screenshot({ path: out + '/04-movil.png', fullPage: true });
 
