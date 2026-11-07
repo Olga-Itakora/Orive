@@ -214,6 +214,8 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   ok('actividad no mencionada en el requisito: aviso de revisión manual', (await page.locator('#vf-verdict').innerText()).includes('Declaración Compatible') && (await page.locator('.cmp-result').innerText()).includes('Revisión manual'));
   await page.goto(B + 'comprobar.php?r=IL-IGA-EV1-REF10-RET10&d=IL-IGA-EV1-REF10-RET40&mode=digits');
   ok('RET10/RET40: no compatible por el grado de RET', (await page.locator('#vf-verdict').innerText()).includes('No Compatible') && (await page.locator('.vf-row-fail th').innerText()).includes('RET'));
+  ok('verificar: título «Detalles» y sin la línea del tipo de obra cuando coincide', (await page.locator('.cmp-result h3', { hasText: 'Detalles' }).count()) === 1 && !(await page.locator('.cmp-result').innerText()).includes('Tipo de obra:'));
+  ok('verificar: la tabla de actividades cabe en la columna sin desplazarse', await page.evaluate(() => { const r = document.querySelector('.table-scroll'); return r.scrollWidth <= r.clientWidth; }));
   await page.screenshot({ path: out + '/03-verificar.png', fullPage: true });
   ok('menú: Instituciones activo en Verificar', (await page.locator('header [aria-current="page"]').innerText()) === 'Instituciones');
 

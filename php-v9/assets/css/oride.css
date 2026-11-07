@@ -726,3 +726,18 @@ textarea.mono { font-family: var(--mono); text-transform: uppercase; }
 @container (max-width: 300px) { .ig-scale { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .ig-scale li { overflow-wrap: anywhere; hyphens: auto; }
 .factor-table { max-width: 100%; } .factor-table td, .factor-table th { overflow-wrap: anywhere; hyphens: auto; }
+/* Tabla de actividades compacta: cabe en la columna sin desplazarse (en pantallas anchas). */
+.vf-table { font-size: 0.8125rem; line-height: 1.35; }
+.vf-table th, .vf-table td { padding: 6px; overflow-wrap: anywhere; hyphens: auto; }
+.vf-why { display: block; margin-top: 2px; font-weight: 400; }
+@media (min-width: 640px) {
+  .vf-table { table-layout: fixed; }
+  .vf-table th:first-child { width: 16%; }
+  .vf-table th:last-child { width: 26%; }
+}
+.vf-table th, .vf-table td { white-space: normal; word-break: normal; }
+.vf-table .vf-state { white-space: nowrap; }
+@media (min-width: 640px) {
+  .vf-table th:first-child { width: 18%; }
+  .vf-table th:last-child { width: 24%; }
+}

@@ -216,6 +216,7 @@ check('14. código no válido', $vd('LI-IGB-EV0-GEN24', 'LI-IGB-EV0-GEN99') === 
 $v = $vf('LI-IGB-EV1-GEN24', 'LIT-IA1-GEN24-V1', 'digits');
 check('15. código de una versión anterior: válido, con categoría derivada', $v['decl']['state'] === 'legacy' && $v['category']['decl'] === 'B' && $v['verdict'] === 'compatible');
 check('16. distintas disciplinas: no compatible', $vd($nc('LI-IA1-EV0-GEN24'), $nc('SW-IA1-EV0-COD24')) === 'incompatible');
+check('    mismo tipo de obra: no se muestra la línea del tipo', !array_filter($vf($nc('LI-IA1-EV0-GEN24'), $nc('LI-IA1-EV0-GEN24'))['checks'], fn($c) => str_contains($c[1], 'Tipo de obra')));
 check('17. evidencias exigidas y no declaradas', $vd($nc('LI-IA1-EV1-GEN24'), $nc('LI-IA1-EV0-GEN24')) === 'incompatible');
 check('18. ejemplo de ilustración (RET10 / RET40): misma categoría, no cumple por grado', ($v = $vf($nc('IL-IA1-EV1-REF10-RET10'), $nc('IL-IA1-EV1-REF10-RET40'), 'digits'))['verdict'] === 'incompatible' && $v['parts']['category'] === 'ok' && $row($v, 'RET')['level'] === 'fail');
 check('19. GEN30 es válido (alcance 0 = menos del 5 %)', ($v = $vf('LI-IGB-EV1', $nc('LI-IA1-EV1-GEN30')))['decl']['state'] === 'valid' && (bool) array_filter($v['decl']['issues'], fn($i) => $i[0] === 'info' && str_contains($i[1], 'no «sin alcance»')));

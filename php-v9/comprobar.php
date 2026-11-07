@@ -80,12 +80,12 @@ page_start(t('cmp_title'), tr('Comprueba si el Código ORIDE de una entrega es c
                   <th scope="col"><?= h(t('vf_t_act')) ?></th>
                   <?php if ($mode === 'weighted'): ?><th scope="col"><?= h(t('vf_t_w')) ?></th>
                   <?php else: ?><th scope="col"><?= h(t('vf_t_lr')) ?></th><th scope="col"><?= h(t('vf_t_ld')) ?></th><th scope="col"><?= h(t('vf_t_sr')) ?></th><th scope="col"><?= h(t('vf_t_sd')) ?></th><?php endif; ?>
-                  <th scope="col"><?= h(t('vf_t_res')) ?></th><th scope="col"><?= h(t('vf_t_why')) ?></th>
+                  <th scope="col"><?= h(t('vf_t_res')) ?></th>
                 </tr></thead>
                 <tbody>
                   <?php foreach ($v['rows'] as $row): ?>
                     <tr class="vf-row-<?= $row['state'] ?>">
-                      <th scope="row"><span class="mono"><?= h($row['act']) ?></span> <?= h($row['name']) ?></th>
+                      <th scope="row"><span class="mono"><?= h($row['act']) ?></span><br><?= h($row['name']) ?></th>
                       <?php if ($mode === 'weighted'): ?>
                         <td><?= $row['contrib'] ? h(num_range($row['contrib'][0], 3) . ' / ' . num_range($row['contrib'][1], 3)) : '—' ?></td>
                       <?php else: ?>
@@ -94,8 +94,7 @@ page_start(t('cmp_title'), tr('Comprueba si el Código ORIDE de una entrega es c
                         <td><?= h($scope($row['req'])) ?></td>
                         <td class="vf-cell-<?= $row['scope'] ?>"><?= h($scope($row['decl'])) ?></td>
                       <?php endif; ?>
-                      <td class="vf-state"><span aria-hidden="true"><?= $icons[$row['state']] ?></span> <?= h($stateLabel($row['state'])) ?></td>
-                      <td><?= h($row['reason']) ?></td>
+                      <td><span class="vf-state"><span aria-hidden="true"><?= $icons[$row['state']] ?></span> <?= h($stateLabel($row['state'])) ?></span><br><span class="vf-why"><?= h($row['reason']) ?></span></td>
                     </tr>
                   <?php endforeach; ?>
                 </tbody>

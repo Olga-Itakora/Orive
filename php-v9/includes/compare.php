@@ -136,7 +136,7 @@ function verify(array $reqParsed, array $declParsed, array $policy): array
         $out['explain'] = verify_explain($out);
         return $out;
     }
-    $out['checks'][] = ['ok', t('cmp_type') . ': ' . type_name($req['type']) . '.'];
+    // Mismo tipo de obra: no hace falta decirlo.
     $out['checks'][] = $req['ia'] === 0 && $decl['ia'] === 1 ? ['fail', t('cmp_ia_forbidden')] : ['ok', t('cmp_ia_ok')];
     if ($req['ev'] === 1) $out['checks'][] = $decl['ev'] === 1 ? ['ok', t('cmp_ev_ok')] : ($decl['ev'] === null ? ['unknown', t('cmp_ev_unknown')] : ['fail', t('cmp_ev_missing')]);
 
