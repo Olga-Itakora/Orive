@@ -499,6 +499,13 @@ function t(string $key, string ...$args): string
 }
 
 /** Nombre de un tipo de obra en el idioma actual. */
+/** Descripción del tipo de obra, si la tiene (p. ej. «Trabajos académicos»). */
+function type_desc(string $type): string
+{
+    $d = WORK_TYPES[$type]['desc'] ?? null;
+    return $d ? $d[en() ? 1 : 0] : '';
+}
+
 function type_name(string $type): string
 {
     return WORK_TYPES[$type][lang()] ?? $type;

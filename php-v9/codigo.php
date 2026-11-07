@@ -52,6 +52,7 @@ $ex = 'LI-IGB-EV1-DOC44-GEN24';
     <?php foreach (WORK_TYPES as $type => $_): ?>
       <section class="card area-card">
         <h3><span class="dim-tag"><?= $type ?></span><?= h(type_name($type)) ?></h3>
+        <?php if (type_desc($type) !== ''): ?><p class="muted small"><?= h(type_desc($type)) ?></p><?php endif; ?>
         <dl class="values">
           <?php foreach (acts($type) as $act => [$name, $desc]): ?><div><dt class="mono"><?= $act ?></dt><dd><b><?= h($name) ?></b><br><span class="muted small"><?= h($desc) ?></span></dd></div><?php endforeach; ?>
         </dl>

@@ -27,7 +27,7 @@ Para recibir bien los correos, crea en IONOS un buzón `no-reply@tudominio` (o p
 - Los textos están en `includes/i18n.php` (taxonomía y mensajes comunes) y, los de cada página, en la propia página con `tr('español', 'English')`.
 - Las letras y cifras del código son las mismas en los dos idiomas.
 
-## Código ORIDE (v9, taxonomía ORIDE Code 3.0)
+## Código ORIDE (v9, taxonomía ORIDE Code 3.1)
 
 Dos líneas. Ejemplo:
 
@@ -38,7 +38,7 @@ DOC44-GEN24
 
 | Parte | Significado |
 |---|---|
-| Línea 1 (tríada) | Tipo de obra, dos letras (SC, LI, MU, PH, IL, DS, AU, SW, TR) · uso de IA · `EV0`/`EV1` evidencias. Las tres son obligatorias. |
+| Línea 1 (tríada) | Tipo de obra (SC, LI, MU, PH, IL, DS, AU, SW, TR y ACA) · uso de IA · `EV0`/`EV1` evidencias. Las tres son obligatorias. |
 | Uso de IA | `IA0`: no se usó IA (nunca se convierte en `IGA`). `IGA`…`IGF`: se usó IA; categoría del Índice Global, calculada a partir de las actividades (no se elige). `IA1`: se usó IA pero no hay categoría (sin actividades o todas a 0). |
 | Línea 2 (opcional, solo con IA) | Actividades: tres letras + grado de uso (0–5) + alcance (0–4). Con los grados 0 y 1 la segunda cifra es 0: `DOC10`. |
 
@@ -47,13 +47,23 @@ DOC44-GEN24
 - Una letra con actividades tiene que coincidir con la calculada: `LI-IGC-EV1-GEN24` no es válido (corresponde a IGB). Una letra sin actividades (`LI-IGB-EV0`) es una categoría fijada en el código: sirve para requisitos que solo limitan la categoría.
 - Si se declara IA pero todas las actividades marcadas tienen grado 0, se avisa de que hay que explicar el uso de la IA fuera de las actividades establecidas (y el código queda en IA1).
 - Grados de uso 3 y 4: «Incorporé los resultados transformados sustancialmente» y «Incorporé los resultados transformados parcialmente».
-- Tipos de obra y actividades: `includes/taxonomy.php` (fuente: `codigos_oride_2.0.xlsx`).
+- Tipos de obra y actividades: `includes/taxonomy.php` (fuente: `codigos_oride_2.0.xlsx`, más Trabajos académicos).
+
+### Trabajos académicos (ACA)
+
+Décimo tipo de obra (*Academic work*), añadido en ORIDE Code 3.1: trabajos elaborados en contextos educativos o formativos (trabajos de asignatura, ensayos, informes de prácticas, revisiones bibliográficas, proyectos, TFG, TFM, actividades de evaluación…), también para participantes que no son estudiantes. Se elige por separado de Investigación científica (SC); los trabajos ya declarados con otro tipo no se reclasifican.
+
+- Identificador `ACA`, igual en los dos idiomas. Es el único de tres letras; no coincide con ningún tipo actual ni con los códigos antiguos (`LEGACY_TYPES`), y nada en el código supone tipos de dos letras.
+- Actividades, en este orden: DOC documentación y búsqueda de fuentes · IDE generación y desarrollo de ideas · EST planificación y estructuración · ANA análisis de información, datos o materiales · ARG razonamientos y argumentación · GEN generación de contenido académico · REV revisión del contenido · FOR revisión formal y de estilo · REF referencias y citas · VAL comprobación y validación.
+- Pesos propios (`basis: proposal`), experimentales y revisables: DOC 0,05 · IDE 0,08 · EST 0,08 · ANA 0,10 · ARG 0,12 · GEN generación directa (G) · REV 0,07 · FOR 0,03 · REF 0,02 · VAL 0,05. Suman 0,60, por encima del techo de 0,50 que se usa en las disciplinas por analogía; P sigue limitado a 1. ANA y ARG son auxiliares: no cuentan como contenido generado, y con grado 1 (consultar sin incorporar) no suman.
+- Añadir una disciplina no cambia ningún cálculo anterior, así que el algoritmo sigue siendo `ORIDE-IG-1.0-experimental`; sí cambia la taxonomía (3.1).
+- Ejemplos y un requisito de universidad en `documentacion.php#academicos`. Ejemplo de sintaxis: `ACA-IGB-EV1` + `DOC21-GEN24` (la B se calcula).
 
 ## Versiones
 
 | Qué | Versión | Dónde |
 |---|---|---|
-| Taxonomía del código | `ORIDE Code 3.0` | `ORIDE_TAXONOMY`, `includes/indice.php` |
+| Taxonomía del código | `ORIDE Code 3.1` (añade ACA; los códigos de 3.0 no cambian) | `ORIDE_TAXONOMY`, `includes/indice.php` |
 | Algoritmo del índice | `ORIDE-IG-1.0-experimental` | `IG_CURRENT`, `includes/indice.php` |
 | Categorías A–F | `ORIDE-IG-CAT-1.0` | `IG_CAT_VERSION`, `includes/categories.php` |
 | Verificador | `ORIDE-VERIFY-1.2` | `VERIFY_VERSION`, `includes/compare.php` |

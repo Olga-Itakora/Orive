@@ -4,6 +4,7 @@ declare(strict_types=1);
 $_SERVER['SCRIPT_FILENAME'] = __FILE__;
 $_SERVER['SCRIPT_NAME'] = '/tests/run.php';
 require __DIR__ . '/../includes/app.php';
+require __DIR__ . '/../includes/builder.php';
 restore_exception_handler();
 
 $ok = 0; $fail = 0;
@@ -16,8 +17,8 @@ $code = fn(array $in) => oride_compute($in)['code'];
 $lit = fn(array $acts, array $u, array $s = [], string $ev = '') => ['type' => 'LI', 'ia' => 'si', 'acts' => $acts, 'u' => $u, 's' => $s, 'ev' => $ev];
 
 echo "Taxonomía\n";
-check('nueve tipos de obra con los códigos pedidos', array_keys(WORK_TYPES) === ['SC', 'LI', 'MU', 'PH', 'IL', 'DS', 'AU', 'SW', 'TR']);
-check('70 actividades, como en la hoja Excel', array_sum(array_map(fn($t) => count($t['acts']), WORK_TYPES)) === 70);
+check('diez tipos de obra; Trabajos académicos (ACA) es el décimo', array_keys(WORK_TYPES) === ['SC', 'LI', 'MU', 'PH', 'IL', 'DS', 'AU', 'SW', 'TR', 'ACA']);
+check('80 actividades: las 70 de la hoja Excel y 10 de Trabajos académicos', array_sum(array_map(fn($t) => count($t['acts']), WORK_TYPES)) === 80);
 check('códigos de actividad de tres letras', !array_filter(WORK_TYPES, fn($t) => array_filter(array_keys($t['acts']), fn($a) => !preg_match('/^[A-Z]{3}$/', $a))));
 check('cada actividad con nombre y descripción en los dos idiomas', !array_filter(WORK_TYPES, fn($t) => array_filter($t['acts'], fn($a) => count(array_filter($a, fn($x) => trim($x) !== '')) !== 4)));
 check('seis grados y cinco alcances en los dos idiomas', count(LEVELS['es']) === 6 && count(LEVELS['en']) === 6 && count(SCOPE['es']) === 5 && count(SCOPE['en']) === 5);
@@ -105,7 +106,7 @@ echo "Índice Global ORIDE: componentes, configuración y versiones\n";
 check('varios componentes: G = 100 Σ w q f', $eq(ig_g([['w' => 0.6, 'q' => [1.0, 1.0], 'f' => [0.5, 0.5]], ['w' => 0.4, 'q' => [0.5, 0.5], 'f' => [1.0, 1.0]]])[0], 50));
 $err = 0; try { ig_g([['w' => 0.7, 'q' => [1, 1], 'f' => [1, 1]], ['w' => 0.7, 'q' => [1, 1], 'f' => [1, 1]]]); } catch (InvalidArgumentException) { $err++; }
 check('componentes solapados (pesos que no suman 1) → error', $err === 1);
-check('versión actual, independiente de la taxonomía', IG_CURRENT === 'ORIDE-IG-1.0-experimental' && ORIDE_TAXONOMY === 'ORIDE Code 3.0' && !isset(ig_config()['taxonomy']));
+check('versión actual, independiente de la taxonomía', IG_CURRENT === 'ORIDE-IG-1.0-experimental' && ORIDE_TAXONOMY === 'ORIDE Code 3.1' && !isset(ig_config()['taxonomy']));
 check('versión desconocida → no calculable', ig_from_result(oride_compute($lit(['DOC'], ['DOC' => '5'], ['DOC' => '4'])), ['version' => 'ORIDE-IG-9.9'])['reason'] === 'version');
 check('factores de la metodología', ig_config()['factors'] === [0 => 0.0, 1 => 0.0, 2 => 0.20, 3 => 0.50, 4 => 0.85, 5 => 1.00]);
 check('pesos de literatura de la metodología', array_map(fn($a) => $a[1], ig_config()['weights']['LI']['acts']) === ['DOC' => 0.05, 'IDE' => 0.10, 'EST' => 0.15, 'GEN' => null, 'REV' => 0.10, 'FOR' => 0.05]);
@@ -113,10 +114,11 @@ $allOk = true;
 foreach (WORK_TYPES as $t => $wt) {
     $cfgW = ig_config()['weights'][$t]['acts'] ?? [];
     if (array_keys($cfgW) !== array_keys($wt['acts'])) $allOk = false;                       // configuración completa
-    if (array_sum(array_map(fn($a) => $a[1] ?? 0, $cfgW)) > 0.5 + 1e-9) $allOk = false;        // techo auxiliar 0,50
+    $cap = (ig_config()['weights'][$t]['basis'] ?? '') === 'proposal' ? 1.0 : 0.5;            // techo auxiliar 0,50 (por analogía)
+    if (array_sum(array_map(fn($a) => $a[1] ?? 0, $cfgW)) > $cap + 1e-9) $allOk = false;
     if (!array_filter($cfgW, fn($a) => $a[0] === 'gen')) $allOk = false;                      // al menos una generativa
 }
-check('todas las disciplinas configuradas, con techo 0,50 y alguna generativa', $allOk);
+check('todas las disciplinas configuradas, con alguna generativa (techo 0,50 en las de analogía)', $allOk);
 $cmp = fn(string $t, string $a) => ig_from_result(oride_compute(['type' => $t, 'ia' => 'si', 'ev' => 'no', 'acts' => [$a], 'u' => [$a => '5'], 's' => [$a => '4']]))['P'];
 check('comparación entre disciplinas: el mismo uso pesa según la disciplina', $cmp('LI', 'EST')[1] > $cmp('LI', 'DOC')[1] && $cmp('SW', 'ARQ')[1] === $cmp('LI', 'EST')[1]);
 check('el registro guarda versión, parámetros y fecha', ($rec = ig_record(($r = oride_compute($lit(['DOC'], ['DOC' => '5'], ['DOC' => '4']))), ig_from_result($r), []))['algorithm'] === IG_CURRENT && isset($rec['parameters']['factors'], $rec['parameters']['weights'], $rec['date']));
@@ -223,6 +225,42 @@ check('19. GEN30 es válido (alcance 0 = menos del 5 %)', ($v = $vf('LI-IGB-EV1'
 check('20. resultado para copiar', str_contains($t = verify_text($vf($req, $decl), oride_explain($req), oride_explain($decl)), 'Resultado: Declaración Compatible') && str_contains($t, VERIFY_VERSION) && str_contains($t, $req));
 check('ponderado: misma fórmula que el índice', ig_act_contrib('LI', 'DOC', 5, 4)['value'] === ig_from_result(oride_compute(['type' => 'LI', 'ia' => 'si', 'ev' => 'no', 'acts' => ['DOC'], 'u' => ['DOC' => '5'], 's' => ['DOC' => '4']]))['rows'][0]['contrib']);
 check('etiquetas del resultado', t('vf_compatible') === 'Declaración Compatible' && t('vf_incompatible') === 'Declaración No Compatible');
+
+echo "Trabajos académicos (ACA)\n";
+$aca = fn(array $acts, string $ev = 'si') => oride_compute(['type' => 'ACA', 'ia' => 'si', 'ev' => $ev, 'acts' => array_keys($acts), 'u' => array_map(fn($x) => (string) $x[0], $acts), 's' => array_map(fn($x) => (string) ($x[1] ?? ''), $acts)]);
+check(' 1. aparece en el selector, en ES y EN', str_contains(builder_form('author', ['type' => '', 'ia' => '', 'ev' => '', 'acts' => [], 'u' => [], 's' => []], 'crear.php'), 'value="ACA"') && type_name('ACA') === 'Trabajos académicos' && WORK_TYPES['ACA']['en'] === 'Academic work');
+check(' 2. diez actividades, en el orden pedido', array_keys(WORK_TYPES['ACA']['acts']) === ['DOC', 'IDE', 'EST', 'ANA', 'ARG', 'GEN', 'REV', 'FOR', 'REF', 'VAL']);
+check('    nombres y descripciones en los dos idiomas', acts('ACA')['ARG'][0] === 'Elaboración de razonamientos y argumentación' && WORK_TYPES['ACA']['acts']['ARG'][2] === 'Reasoning and argumentation' && count(WORK_TYPES['ACA']['desc']) === 2);
+check(' 3. genera códigos con ACA (ejemplo de sintaxis, categoría calculada)', implode(' ', $aca(['DOC' => [2, 1], 'GEN' => [2, 4]])['lines']) === 'ACA-IGB-EV1 DOC21-GEN24');
+check('    actividades en el orden del tipo', $aca(['VAL' => [2, 1], 'DOC' => [1]])['lines'][1] === 'DOC10-VAL21');
+check(' 4. lee códigos ACA (dos líneas, minúsculas, formato antiguo con IA1)', $x("ACA-IGB-EV1\nDOC21-GEN24")['result']['code'] === 'ACA-IGB-EV1-DOC21-GEN24' && $x('aca-igb-ev1-gen24-doc21')['valid'] && ($r = $x('ACA-IA1-EV1-DOC21-GEN24')['result'])['cat'] === 'B' && $r['cat_source'] === 'derived');
+check('    rechaza actividades de otros tipos (COD, RED) y letras que no cuadran', !$x('ACA-IA1-EV1-COD24')['valid'] && !$x('ACA-IA1-EV1-RED24')['valid'] && !$x('ACA-IGC-EV1-DOC21-GEN24')['valid']);
+$w = ig_config()['weights']['ACA'];
+check(' 5. pesos propios (no copiados de Literatura ni de Investigación científica)', $w['basis'] === 'proposal' && array_map(fn($a) => $a[1], $w['acts']) === ['DOC' => 0.05, 'IDE' => 0.08, 'EST' => 0.08, 'ANA' => 0.10, 'ARG' => 0.12, 'GEN' => null, 'REV' => 0.07, 'FOR' => 0.03, 'REF' => 0.02, 'VAL' => 0.05] && $w !== ig_config()['weights']['LI'] && $w !== ig_config()['weights']['SC']);
+check(' 6. GEN es generación directa (G) y no se suma como auxiliar', $w['acts']['GEN'][0] === 'gen' && ($r = ig_from_result($aca(['GEN' => [5, 4]])))['P'] === [0.0, 0.0] && $eq($r['G'][1], 100));
+check('    ANA y ARG son auxiliares: no cuentan como contenido generado', $w['acts']['ANA'][0] === 'aux' && $w['acts']['ARG'][0] === 'aux' && ig_from_result($aca(['ARG' => [5, 4], 'ANA' => [5, 4]]))['G'] === [0.0, 0.0]);
+check('    consultar sin incorporar (grado 1) no suma', ig_from_result($aca(['ARG' => [1], 'ANA' => [1]]))['IG'] === [0.0, 0.0]);
+check('    ARG pesa más que DOC con el mismo uso (pesos de ACA)', ig_act_contrib('ACA', 'ARG', 4, 4)['value'][1] > ig_act_contrib('ACA', 'DOC', 4, 4)['value'][1] && $eq(ig_from_result($aca(['ARG' => [5, 4]]))['IG'][1], 12));
+check(' 7. índice y categoría A–F con el algoritmo actual', ($r = $aca(['DOC' => [2, 1], 'GEN' => [3, 2], 'FOR' => [3, 2]]))['cat'] === ig_classify_range(...ig_from_result($r)['IG']) && $r['cat'] === 'B' && ig_from_result($r)['version'] === IG_CURRENT);
+check('    todas las auxiliares al máximo: P = 0,60 → D', ($r = $aca(array_fill_keys(['DOC', 'IDE', 'EST', 'ANA', 'ARG', 'REV', 'FOR', 'REF', 'VAL'], [5, 4])))['cat'] === 'D' && $eq(ig_from_result($r)['P'][1], 0.60));
+check(' 8. sin IA: ACA-IA0', $code(['type' => 'ACA', 'ia' => 'no', 'ev' => 'no']) === 'ACA-IA0-EV0' && $x('ACA-IA0-EV1')['valid']);
+check('    con IA y todo a 0: IA1, sin categoría', $aca(['DOC' => [0], 'GEN' => [0]])['code'] === 'ACA-IA1-EV1-DOC00-GEN00');
+check(' 9. el identificador no choca con otros tipos ni con códigos antiguos', !isset(LEGACY_TYPES['ACA']) && !in_array('ACA', LEGACY_TYPES, true) && count(array_unique(array_merge(array_keys(WORK_TYPES), array_keys(LEGACY_TYPES)))) === count(WORK_TYPES) + count(LEGACY_TYPES));
+$dup = false; foreach (WORK_TYPES as $wt) if (count(array_unique(array_keys($wt['acts']))) !== count($wt['acts'])) $dup = true;
+check('    actividades únicas dentro de cada tipo (DOC de ACA no se confunde con DOC de SC)', !$dup && $x('SC-IA1-EV1-DOC21')['result']['type'] === 'SC' && ig_act_contrib('ACA', 'DOC', 5, 4) == ig_act_contrib('SC', 'DOC', 5, 4) && ig_act_contrib('ACA', 'REV', 5, 4) != ig_act_contrib('SC', 'REV', 5, 4));
+check('10. los códigos anteriores no cambian (incluidos TFG/TFM declarados como SC)', $x('SC-IA1-EV1-RED42')['result']['code'] === 'SC-IA1-EV1-RED42' && $x('SC-IGC-EV1-RED42')['valid'] && $x('LIT-IA1-V1-DOC44-GEN24')['result']['type'] === 'LI');
+// Requisito de una universidad: documentación y revisión formal permitidas, generación limitada, argumentos solo consultados.
+$req = $aca(['DOC' => [5, 4], 'ARG' => [1], 'GEN' => [2, 1], 'FOR' => [5, 4]])['code'];
+$ex1 = $aca(['DOC' => [2, 1], 'FOR' => [4, 3]])['code'];
+$ex2 = $aca(['DOC' => [2, 1], 'IDE' => [2, 2], 'ARG' => [3, 3], 'REV' => [2, 2]])['code'];
+$ex3 = $aca(['DOC' => [2, 1], 'GEN' => [3, 2], 'FOR' => [3, 2]])['code'];
+check('11. ejemplos: DOC+FOR, ARG, GEN (categorías calculadas)', $ex1 === 'ACA-IGA-EV1-DOC21-FOR43' && $ex2 === 'ACA-IGA-EV1-DOC21-IDE22-ARG33-REV22' && $ex3 === 'ACA-IGB-EV1-DOC21-GEN32-FOR32');
+$vfa = fn(string $d, string $m) => verify(oride_explain($req), oride_explain($d), ['mode' => $m]);
+check('12. verificador: el ejemplo 1 cumple el requisito de la universidad', $vfa($ex1, 'digits')['verdict'] === 'compatible');
+check('    el ejemplo 2 tiene la misma categoría, pero no cumple el límite de ARG', $vfa($ex2, 'global')['verdict'] === 'compatible' && ($v = $vfa($ex2, 'digits'))['verdict'] === 'incompatible' && $v['parts']['category'] === 'ok' && $row($v, 'ARG')['state'] === 'fail' && $row($v, 'IDE')['state'] === 'alert');
+check('    el ejemplo 3 supera la categoría y la generación permitidas', $vfa($ex3, 'global')['verdict'] === 'incompatible' && $row($vfa($ex3, 'digits'), 'GEN')['state'] === 'fail');
+check('    ACA frente a SC: distintas disciplinas', verify(oride_explain('SC-IGA-EV1'), oride_explain($ex1), ['mode' => 'global'])['verdict'] === 'incompatible');
+check('13. texto, enlace y JSON', str_contains(oride_text($r = $aca(['DOC' => [2, 1], 'FOR' => [4, 3]])), "Tipo de obra: Trabajos académicos\n") && str_contains(code_url($r['code']), 'oride.php?ACA-IGA-EV1-DOC21-FOR43&ig=') && ig_record($r, ig_from_result($r), [])['parameters']['weights']['basis'] === 'proposal');
 
 echo "Textos e idioma\n";
 $r = oride_compute($lit(['DOC'], ['DOC' => '4'], ['DOC' => '4'], 'si'));

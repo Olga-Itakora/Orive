@@ -63,7 +63,7 @@ function builder_form(string $mode, array $in, string $action): string
             : tr('Si quieres, detalla en qué actividades usaste la IA y cómo.', 'If you want, say in which activities you used AI and how.')) . '</p></div>';
 
     foreach (WORK_TYPES as $type => $_) {
-        $html .= '<div class="stack-q"' . when("type=$type") . '><fieldset class="choices q"><legend>' . h(tr('Actividades de ', 'Activities in ') . mb_strtolower(type_name($type))) . '</legend><div class="choice-list">';
+        $html .= '<div class="stack-q"' . when("type=$type") . '><fieldset class="choices q"><legend>' . h(tr('Actividades de ', 'Activities in ') . mb_strtolower(type_name($type))) . '</legend>' . (type_desc($type) !== '' ? '<p class="hint">' . h(type_desc($type)) . '</p>' : '') . '<div class="choice-list">';
         foreach (acts($type) as $act => [$name, $desc]) $html .= choice("acts_{$type}[]", $act, 'checkbox', $in['type'] === $type && in_array($act, $in['acts'], true), h($name), $desc);
         $html .= '</div></fieldset>';
         foreach (acts($type) as $act => [$name]) {

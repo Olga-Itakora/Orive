@@ -1,6 +1,8 @@
 <?php
 /**
- * ORIDE v5 — tipos de obra y actividades (fuente: codigos_oride_2.0.xlsx).
+ * Tipos de obra y actividades (ORIDE Code 3.1; fuente: codigos_oride_2.0.xlsx, más «Trabajos académicos», ACA).
+ * ACA es el único tipo con tres letras: no coincide con ningún tipo actual ni con los códigos antiguos (LEGACY_TYPES).
+ * 'desc' (opcional): descripción del tipo, [ES, EN].
  * Los códigos son los mismos en los dos idiomas.
  * Cada actividad: [nombre ES, descripción ES, nombre EN, descripción EN].
  */
@@ -94,6 +96,21 @@ const WORK_TYPES = [
         'STY' => ['Revisión de estilo', 'Mejora de naturalidad, fluidez, claridad, uniformidad del registro y calidad expresiva en el idioma de destino.', 'Style review', 'Improving naturalness, fluency, clarity, consistency of register and expression in the target language.'],
         'LOC' => ['Localización', 'Adaptación de interfaces, videojuegos, aplicaciones, formatos, unidades, convenciones y otros elementos a un mercado o entorno lingüístico.', 'Localisation', 'Adapting interfaces, games, apps, formats, units, conventions and other elements to a market or locale.'],
         'VAL' => ['Validación y control de calidad', 'Comprobación de consistencia global, cumplimiento de glosarios, requisitos lingüísticos y criterios de calidad de la traducción.', 'Validation and quality control', 'Checking overall consistency, glossary compliance, linguistic requirements and quality criteria.'],
+    ]],
+    'ACA' => ['es' => 'Trabajos académicos', 'en' => 'Academic work',
+        'desc' => ['Trabajos elaborados en contextos educativos o formativos para desarrollar, aplicar, demostrar o evaluar conocimientos y competencias: trabajos de asignatura, ensayos, informes de prácticas, revisiones bibliográficas, proyectos, TFG, TFM, actividades de evaluación… También para quien participa en una formación sin ser estudiante.',
+            'Works produced in educational or training contexts to develop, apply, demonstrate, or assess knowledge and competencies: coursework, essays, internship reports, literature reviews, projects, bachelor’s and master’s theses, assessment activities… Also for other participants in training, not only students.'],
+        'acts' => [
+        'DOC' => ['Documentación y búsqueda de fuentes', 'Uso de IA para localizar, explorar, resumir o comprender información y fuentes relacionadas con el trabajo académico.', 'Research and source finding', 'Use of AI to locate, explore, summarize, or understand information and sources relevant to academic work.'],
+        'IDE' => ['Generación y desarrollo de ideas', 'Uso de IA para proponer, explorar o desarrollar temas, enfoques, preguntas y posibles soluciones.', 'Idea generation and development', 'Use of AI to propose, explore, or develop topics, approaches, questions, and possible solutions.'],
+        'EST' => ['Planificación y estructuración del trabajo', 'Uso de IA para planificar, organizar o estructurar el desarrollo y la presentación del trabajo.', 'Planning and structuring the work', 'Use of AI to plan, organize, or structure the development and presentation of the work.'],
+        'ANA' => ['Análisis de información, datos o materiales', 'Uso de IA para analizar información, datos, textos, documentos u otros materiales relacionados con el trabajo.', 'Analysis of information, data or materials', 'Use of AI to analyze information, data, texts, documents, or other materials related to the work.'],
+        'ARG' => ['Elaboración de razonamientos y argumentación', 'Uso de IA para construir, desarrollar, contrastar o revisar razonamientos, explicaciones y argumentos.', 'Reasoning and argumentation', 'Use of AI to construct, develop, challenge, or review reasoning, explanations, and arguments.'],
+        'GEN' => ['Generación de contenido académico', 'Uso de IA para producir textos, respuestas, soluciones u otros contenidos que puedan incorporarse al trabajo académico.', 'Academic content generation', 'Use of AI to produce texts, answers, solutions, or other content that may be incorporated into academic work.'],
+        'REV' => ['Revisión del contenido', 'Uso de IA para revisar la coherencia, precisión, completitud y organización del contenido académico.', 'Content review', 'Use of AI to review the coherence, accuracy, completeness, and organization of academic content.'],
+        'FOR' => ['Revisión formal y de estilo', 'Uso de IA para mejorar aspectos lingüísticos, estilísticos y de presentación del trabajo, sin modificar sustancialmente su contenido.', 'Formal and style review', 'Use of AI to improve linguistic, stylistic, and presentation aspects of the work without substantially changing its content.'],
+        'REF' => ['Gestión de referencias y citas', 'Uso de IA para identificar, organizar, formatear o comprobar referencias bibliográficas y citas.', 'Reference and citation management', 'Use of AI to identify, organize, format, or check bibliographic references and citations.'],
+        'VAL' => ['Comprobación y validación de información', 'Uso de IA para comprobar afirmaciones, cálculos, resultados, soluciones o información incluida en el trabajo.', 'Checking and validating information', 'Use of AI to check claims, calculations, results, solutions, or information included in the work.'],
     ]],
 ];
 

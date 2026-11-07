@@ -10,7 +10,7 @@ require_once __DIR__ . '/i18n.php';
 require_once __DIR__ . '/indice.php';
 require_once __DIR__ . '/categories.php';
 require_once __DIR__ . '/compare.php';
-const ORIDE_VERSION = '9.0.1';
+const ORIDE_VERSION = '9.1.0';
 
 // ---------------------------------------------------------------------------
 // Configuración

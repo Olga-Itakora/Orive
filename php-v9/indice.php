@@ -53,7 +53,7 @@ page_start(t('nav_index'), tr('Cómo se calcula el Índice Global ORIDE: fórmul
   <h3><?= h(tr('Pesos por disciplina', 'Weights by discipline')) ?></h3>
   <p class="small muted"><?= h(tr('Las actividades generativas cuentan en G; las auxiliares, en P con su peso. Los pesos de literatura son los de la metodología. Los del resto de disciplinas son provisionales, asignados por analogía con literatura y con un máximo de 0,50 en total.', 'Generative activities count in G; auxiliary ones count in P with their weight. The literature weights are those of the methodology. The weights for the other disciplines are provisional, assigned by analogy with literature, with a total maximum of 0.50.')) ?></p>
   <?php foreach ($cfg['weights'] as $type => $wt): $acts = acts($type); ?>
-    <details class="faq"><summary><?= h(type_name($type)) ?> <span class="muted small">· <?= h($wt['basis'] === 'spec' ? tr('pesos de la metodología', 'methodology weights') : tr('provisional, por analogía', 'provisional, by analogy')) ?></span></summary>
+    <details class="faq"><summary><?= h(type_name($type)) ?> <span class="muted small">· <?= h(['spec' => tr('pesos de la metodología', 'methodology weights'), 'proposal' => tr('pesos propios, experimentales', 'own experimental weights')][$wt['basis']] ?? tr('provisional, por analogía', 'provisional, by analogy')) ?></span></summary>
       <table class="factor-table"><tbody>
         <?php foreach ($wt['acts'] as $act => [$role, $w, $why]): ?>
           <tr><td><?= h($acts[$act][0]) ?></td><td class="n"><?= $role === 'gen' ? 'G' : num($w, 2) ?></td><td class="muted"><?= h(ig_why($why)) ?></td></tr>

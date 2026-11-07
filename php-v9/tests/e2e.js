@@ -109,10 +109,10 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   const nojs = await newPage({ javaScriptEnabled: false });
   await nojs.goto(B + 'crear.php?lang=es&type=LI&ia=si&ev=si&acts_LI[]=DOC&u_LI_DOC=4&s_LI_DOC=4&acts_LI[]=GEN&u_LI_GEN=2&s_LI_GEN=4');
   ok('sin JavaScript el servidor da el mismo código e índice', (await code(nojs)) === 'LI-IGB-EV1DOC44-GEN24' && (await ig(nojs)) === indexInForm);
-  const types = { SC: ['DOC', 'HIP', 'MET', 'DAT', 'ANA', 'INT', 'RED', 'REV', 'FOR'], MU: ['IDE', 'COM', 'ARR', 'GEN', 'INT', 'MIX', 'MAS', 'RES'], PH: ['PLA', 'CAP', 'REV', 'RET', 'MOD', 'GEN', 'REC'], IL: ['REF', 'IDE', 'COM', 'GEN', 'TRA', 'RET', 'AMP', 'VAR', 'REV', 'FIN'], AU: ['GUI', 'STO', 'GEN', 'VOZ', 'MON', 'EFX', 'DOB', 'POS'], TR: ['DOC', 'INT', 'GEN', 'ADA', 'REV', 'STY', 'LOC', 'VAL'] };
+  const types = { SC: ['DOC', 'HIP', 'MET', 'DAT', 'ANA', 'INT', 'RED', 'REV', 'FOR'], MU: ['IDE', 'COM', 'ARR', 'GEN', 'INT', 'MIX', 'MAS', 'RES'], PH: ['PLA', 'CAP', 'REV', 'RET', 'MOD', 'GEN', 'REC'], IL: ['REF', 'IDE', 'COM', 'GEN', 'TRA', 'RET', 'AMP', 'VAR', 'REV', 'FIN'], AU: ['GUI', 'STO', 'GEN', 'VOZ', 'MON', 'EFX', 'DOB', 'POS'], TR: ['DOC', 'INT', 'GEN', 'ADA', 'REV', 'STY', 'LOC', 'VAL'], ACA: ['DOC', 'IDE', 'EST', 'ANA', 'ARG', 'GEN', 'REV', 'FOR', 'REF', 'VAL'] };
   let same = 0, n = 30;
   for (let i = 0; i < n; i++) {
-    const t = Object.keys(types)[i % 6];
+    const t = Object.keys(types)[i % 7];
     const qs = new URLSearchParams(); qs.set('lang', 'es'); qs.set('type', t); qs.set('ia', Math.random() < 0.15 ? 'no' : 'si'); qs.set('ev', Math.random() < 0.5 ? 'si' : 'no');
     types[t].forEach(a => { if (Math.random() < 0.35) { qs.append('acts_' + t + '[]', a); const l = Math.floor(Math.random() * 6); qs.set(`u_${t}_${a}`, l); if (l >= 2) qs.set(`s_${t}_${a}`, Math.floor(Math.random() * 5)); } });
     await nojs.goto(B + 'crear.php?' + qs);
@@ -126,9 +126,35 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   }
   ok(`navegador y servidor coinciden en ${n} combinaciones (código e índice)`, same === n, same + '/' + n);
 
+  // Trabajos académicos (ACA)
+  await page.goto(B + 'crear.php');
+  const typeLabels = await page.locator('input[name=type]').evaluateAll(xs => xs.map(x => x.value));
+  ok('ACA: Trabajos académicos es la décima opción del selector', typeLabels.length === 10 && typeLabels[9] === 'ACA' && await page.isVisible('label:has(input[name=type][value=ACA]) >> text=Trabajos académicos'));
+  await page.check('input[name=type][value=ACA]');
+  await page.check('input[name=ia][value=si]');
+  await page.check('input[name=ev][value=si]');
+  const acaActs = await page.locator('input[name="acts_ACA[]"]').evaluateAll(xs => xs.filter(x => x.offsetParent !== null).map(x => x.value));
+  ok('ACA: las diez actividades visibles, en orden', JSON.stringify(acaActs) === JSON.stringify(['DOC', 'IDE', 'EST', 'ANA', 'ARG', 'GEN', 'REV', 'FOR', 'REF', 'VAL']), acaActs.join(','));
+  ok('ACA: descripción del tipo junto a las actividades', (await page.locator('main').innerText()).includes('Trabajos elaborados en contextos educativos o formativos'));
+  ok('ACA: sin IA → ACA-IA1-EV1 hasta detallar actividades', (await waitCode('ACA-IA1-EV1')) === 'ACA-IA1-EV1');
+  await page.check('input[name="acts_ACA[]"][value=DOC]');
+  await page.check('input[name=u_ACA_DOC][value="2"]');
+  await page.check('input[name=s_ACA_DOC][value="1"]');
+  await page.check('input[name="acts_ACA[]"][value=GEN]');
+  await page.check('input[name=u_ACA_GEN][value="2"]');
+  await page.check('input[name=s_ACA_GEN][value="4"]');
+  ok('ACA: código ACA-IGB-EV1 DOC21-GEN24 con la categoría calculada', (await waitCode('ACA-IGB-EV1DOC21-GEN24')) === 'ACA-IGB-EV1DOC21-GEN24' && (await igIs('B — Bajo')) === 'B — Bajo');
+  ok('ACA: enlace con el código', /oride\.php\?ACA-IGB-EV1-DOC21-GEN24&ig=/.test(await page.getAttribute('[data-copy-link]', 'data-copy-link')));
+  await page.goto(B + 'oride.php?ACA-IGB-EV1-DOC21-GEN24&lang=en');
+  ok('ACA en inglés: Academic work y misma categoría', (await page.locator('main').innerText()).includes('Academic work') && (await ig()) === 'B — Low');
+  await page.goto(B + 'comprobar.php?r=ACA-IGA-EV1-DOC54-ARG10-GEN21-FOR54&d=ACA-IGA-EV1-DOC21-IDE22-ARG33-REV22&mode=digits');
+  ok('ACA: el verificador aplica el límite de ARG aunque la categoría cumpla', (await page.locator('#vf-verdict').innerText()).includes('Declaración No Compatible') && (await page.locator('.vf-row-fail th').innerText()).includes('ARG'));
+  await page.goto(B + 'documentacion.php#academicos');
+  ok('Documentación: sección de trabajos académicos con tres ejemplos y el requisito', (await page.locator('#academicos .example-card').count()) === 3 && (await page.locator('#academicos').innerText()).includes('ACA-IGA-EV1'));
+
   // Descarga del cálculo
   const rec = await (await page.request.get(B + 'calc.php?code=LI-IGB-EV1-DOC44-GEN24&format=json')).json();
-  ok('descarga JSON con versiones, parámetros y resultado sin redondear', rec.algorithm === 'ORIDE-IG-1.0-experimental' && rec.taxonomy === 'ORIDE Code 3.0' && rec.parameters.factors && Math.abs(rec.result.IG[1] - 23.4) < 0.01 && rec.category.category === 'B' && rec.category.version === 'ORIDE-IG-CAT-1.0' && Math.abs(rec.category.midpoint - 20.555) < 0.01);
+  ok('descarga JSON con versiones, parámetros y resultado sin redondear', rec.algorithm === 'ORIDE-IG-1.0-experimental' && rec.taxonomy === 'ORIDE Code 3.1' && rec.parameters.factors && Math.abs(rec.result.IG[1] - 23.4) < 0.01 && rec.category.category === 'B' && rec.category.version === 'ORIDE-IG-CAT-1.0' && Math.abs(rec.category.midpoint - 20.555) < 0.01);
 
   // Documentación y subpáginas con miga de pan
   for (const [pg, title] of [['codigo.php', 'Código ORIDE'], ['indice.php', 'Cómo se calcula el Índice Global ORIDE']]) {

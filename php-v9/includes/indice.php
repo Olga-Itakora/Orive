@@ -20,7 +20,7 @@ require_once __DIR__ . '/taxonomy.php';
 const IG_CURRENT = 'ORIDE-IG-1.0-experimental';
 
 /** Versión de la taxonomía (códigos y actividades), independiente de la del algoritmo. */
-const ORIDE_TAXONOMY = 'ORIDE Code 3.0';
+const ORIDE_TAXONOMY = 'ORIDE Code 3.1'; // 3.1: añade «Trabajos académicos» (ACA); los códigos de 3.0 no cambian
 
 /** Peso de un tipo de actividad. 'gen' = genera contenido de la obra final (cuenta en G); 'aux' = auxiliar (cuenta en P). */
 const IG_VERSIONS = [
@@ -38,6 +38,9 @@ const IG_VERSIONS = [
         // Pesos por disciplina. Los de literatura son los de la especificación (techo auxiliar 0,45 aquí,
         // porque ORIDE Code 2.0 no tiene «Traducción» como actividad de literatura). El resto son
         // provisionales, por analogía con literatura y con el mismo techo de 0,50; cada uno lleva su justificación.
+        // Trabajos académicos (ACA, añadido en ORIDE Code 3.1) tiene pesos propios ('proposal'): propuesta experimental,
+        // no copiada de otra disciplina ni validada científicamente; suman 0,60. Añadir una disciplina no cambia
+        // ningún cálculo anterior, así que el algoritmo conserva su versión.
         'weights' => [
             'LI' => ['basis' => 'spec', 'acts' => [
                 'DOC' => ['aux', 0.05, 'Documentación (especificación)'],
@@ -127,12 +130,34 @@ const IG_VERSIONS = [
                 'LOC' => ['aux', 0.05, 'Adaptación de formatos'],
                 'VAL' => ['aux', 0.05, 'Validación'],
             ]],
+            'ACA' => ['basis' => 'proposal', 'acts' => [
+                'DOC' => ['aux', 0.05, 'Propuesta experimental: documentación'],
+                'IDE' => ['aux', 0.08, 'Propuesta experimental: ideas'],
+                'EST' => ['aux', 0.08, 'Propuesta experimental: planificación y estructura'],
+                'ANA' => ['aux', 0.10, 'Propuesta experimental: análisis'],
+                'ARG' => ['aux', 0.12, 'Propuesta experimental: razonamiento y argumentación'],
+                'GEN' => ['gen', null, 'Produce el contenido académico final'],
+                'REV' => ['aux', 0.07, 'Propuesta experimental: revisión del contenido'],
+                'FOR' => ['aux', 0.03, 'Propuesta experimental: revisión formal'],
+                'REF' => ['aux', 0.02, 'Propuesta experimental: referencias'],
+                'VAL' => ['aux', 0.05, 'Propuesta experimental: comprobación'],
+            ]],
         ],
     ],
 ];
 
 /** Traducción de las justificaciones de los pesos (indice.php). */
 const IG_WHY_EN = [
+    'Propuesta experimental: documentación' => 'Experimental proposal: research',
+    'Propuesta experimental: ideas' => 'Experimental proposal: ideas',
+    'Propuesta experimental: planificación y estructura' => 'Experimental proposal: planning and structure',
+    'Propuesta experimental: análisis' => 'Experimental proposal: analysis',
+    'Propuesta experimental: razonamiento y argumentación' => 'Experimental proposal: reasoning and argumentation',
+    'Produce el contenido académico final' => 'Produces the final academic content',
+    'Propuesta experimental: revisión del contenido' => 'Experimental proposal: content review',
+    'Propuesta experimental: revisión formal' => 'Experimental proposal: formal review',
+    'Propuesta experimental: referencias' => 'Experimental proposal: references',
+    'Propuesta experimental: comprobación' => 'Experimental proposal: checking',
     'Documentación (especificación)' => 'Research (methodology)',
     'Generación de ideas (especificación)' => 'Idea generation (methodology)',
     'Estructuración (especificación)' => 'Structuring (methodology)',
