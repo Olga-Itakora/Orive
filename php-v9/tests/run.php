@@ -262,6 +262,12 @@ check('    el ejemplo 3 supera la categoría y la generación permitidas', $vfa(
 check('    ACA frente a SC: distintas disciplinas', verify(oride_explain('SC-IGA-EV1'), oride_explain($ex1), ['mode' => 'global'])['verdict'] === 'incompatible');
 check('13. texto, enlace y JSON', str_contains(oride_text($r = $aca(['DOC' => [2, 1], 'FOR' => [4, 3]])), "Tipo de obra: Trabajos académicos\n") && str_contains(code_url($r['code']), 'oride.php?ACA-IGA-EV1-DOC21-FOR43&ig=') && ig_record($r, ig_from_result($r), [])['parameters']['weights']['basis'] === 'proposal');
 
+echo "Aviso de actividades a 0 (no debe estar oculto en el HTML)\n";
+check('ejemplo con actividades: sin el texto del aviso en el HTML', !str_contains(code_box(oride_compute($lit(['GEN'], ['GEN' => '2'], ['GEN' => '4'], 'si'))), 'todas las actividades marcadas'));
+check('todo a 0: el aviso se muestra', str_contains(code_box(oride_compute($lit(['GEN'], ['GEN' => '0'], [], 'si'))), 'todas las actividades marcadas'));
+check('formulario en vivo: el aviso está vacío hasta que aplica', str_contains($h = code_box(oride_compute($lit(['GEN'], ['GEN' => '2'], ['GEN' => '4'], 'si')), ['live' => true]), 'data-allzero') && !preg_match('/data-allzero[^>]*>[^<]+</', $h));
+check('metodología presentada como experimental, no validada', str_contains(file_get_contents(__DIR__ . '/../indice.php'), 'no se han validado científica ni empíricamente'));
+
 echo "Textos e idioma\n";
 $r = oride_compute($lit(['DOC'], ['DOC' => '4'], ['DOC' => '4'], 'si'));
 $txt = oride_text($r);

@@ -144,8 +144,12 @@
         if (det && wasOpen) det.open = true;
       }
       var az = $("[data-allzero]", box), azf = $("[data-allzero-form]", form);
-      if (az) az.hidden = !d.allZero;
-      if (azf) azf.hidden = !d.allZero;
+      // El aviso solo lleva texto cuando aplica (así no aparece en el HTML si no corresponde).
+      [az, azf].forEach(function (el) {
+        if (!el) return;
+        el.hidden = !d.allZero;
+        el.textContent = d.allZero ? el.getAttribute("data-text") : "";
+      });
       var q = $("[data-showq]", form);
       if (q && q.hidden === d.needsQ) { q.hidden = !d.needsQ; if (d.needsQ) schedule(); }
       var complete = d.status === "complete";

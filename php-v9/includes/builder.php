@@ -80,7 +80,7 @@ function builder_form(string $mode, array $in, string $action): string
 
     // Aviso: IA declarada, pero todas las actividades marcadas con «No utilicé IA».
     $r = oride_compute($in);
-    $html .= '<div class="alert alert-warn" data-allzero-form' . ($r['all_zero'] ? '' : ' hidden') . '>' . h(t('all_zero')) . '</div>';
+    $html .= '<div class="alert alert-warn" data-allzero-form data-text="' . h(t('all_zero')) . '"' . ($r['all_zero'] ? '>' . h(t('all_zero')) : ' hidden>') . '</div>';
 
     // La pregunta adicional de proporción (q) ya no se hace en el formulario: el índice usa el alcance
     // declarado. Los enlaces antiguos con q o qp se siguen respetando (ig_from_result).

@@ -11,7 +11,7 @@ page_start(t('nav_index'), tr('Cómo se calcula el Índice Global ORIDE: fórmul
   <p class="eyebrow"><?= h(IG_CURRENT . ' · ' . IG_CAT_VERSION) ?></p>
   <h1><?= h(tr('Cómo se calcula el Índice Global ORIDE', 'How the ORIDE Global Index is calculated')) ?></h1>
   <p class="lead"><?= h(tr('Un valor de 0 a 100 que estima la contribución de la IA a una obra, a partir de su Código ORIDE, y que se muestra como una categoría de A a F.', 'A value from 0 to 100 that estimates the contribution of AI to a work, based on its ORIDE Code, and is shown as a category from A to F.')) ?></p>
-  <div class="card honor"><p><?= h(t('ig_explain')) ?></p></div>
+  <div class="card honor"><p><?= h(t('ig_explain')) ?></p><p><b><?= h(tr('Estado: metodología experimental, abierta a revisión.', 'Status: experimental methodology, open to review.')) ?></b> <?= h(tr('Los factores, los pesos y los umbrales de las categorías son convenciones iniciales: no se han validado científica ni empíricamente, y pueden cambiar en versiones posteriores. Cada cambio crea una versión nueva, así que un índice publicado siempre se puede reproducir con las reglas con que se calculó.', 'The factors, weights and category thresholds are initial conventions: they have not been scientifically or empirically validated and may change in later versions. Each change creates a new version, so a published index can always be reproduced with the rules used to calculate it.')) ?></p></div>
 
   <h2><?= h(tr('La fórmula', 'The formula')) ?></h2>
   <p class="formula">IG = G + (100 − G) · P</p>
@@ -51,9 +51,9 @@ page_start(t('nav_index'), tr('Cómo se calcula el Índice Global ORIDE: fórmul
   </tbody></table>
 
   <h3><?= h(tr('Pesos por disciplina', 'Weights by discipline')) ?></h3>
-  <p class="small muted"><?= h(tr('Las actividades generativas cuentan en G; las auxiliares, en P con su peso. Los pesos de literatura son los de la metodología. Los del resto de disciplinas son provisionales, asignados por analogía con literatura y con un máximo de 0,50 en total.', 'Generative activities count in G; auxiliary ones count in P with their weight. The literature weights are those of the methodology. The weights for the other disciplines are provisional, assigned by analogy with literature, with a total maximum of 0.50.')) ?></p>
+  <p class="small muted"><?= h(tr('Las actividades generativas cuentan en G; las auxiliares, en P con su peso. Los pesos de literatura son los de la especificación inicial. Los del resto de disciplinas son provisionales, asignados por analogía con literatura y con un máximo de 0,50 en total.', 'Generative activities count in G; auxiliary ones count in P with their weight. The literature weights are those of the initial specification. The weights for the other disciplines are provisional, assigned by analogy with literature, with a total maximum of 0.50.')) ?></p>
   <?php foreach ($cfg['weights'] as $type => $wt): $acts = acts($type); ?>
-    <details class="faq"><summary><?= h(type_name($type)) ?> <span class="muted small">· <?= h(['spec' => tr('pesos de la metodología', 'methodology weights'), 'proposal' => tr('pesos propios, experimentales', 'own experimental weights')][$wt['basis']] ?? tr('provisional, por analogía', 'provisional, by analogy')) ?></span></summary>
+    <details class="faq"><summary><?= h(type_name($type)) ?> <span class="muted small">· <?= h(['spec' => tr('pesos de la especificación inicial', 'initial specification weights'), 'proposal' => tr('pesos propios, experimentales', 'own experimental weights')][$wt['basis']] ?? tr('provisional, por analogía', 'provisional, by analogy')) ?></span></summary>
       <table class="factor-table"><tbody>
         <?php foreach ($wt['acts'] as $act => [$role, $w, $why]): ?>
           <tr><td><?= h($acts[$act][0]) ?></td><td class="n"><?= $role === 'gen' ? 'G' : num($w, 2) ?></td><td class="muted"><?= h(ig_why($why)) ?></td></tr>

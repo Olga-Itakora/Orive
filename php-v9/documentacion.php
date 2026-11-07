@@ -98,7 +98,7 @@ page_start(t('nav_docs'), tr('Cómo funcionan el Código ORIDE y el Índice Glob
 
   <section id="indice">
     <h2><?= h(tr('Cómo funciona el Índice Global ORIDE', 'How the ORIDE Global Index works')) ?></h2>
-    <p><?= h(tr('Junto al código se calcula una estimación de 0 a 100 de la contribución de la IA a la obra:', 'Alongside the code, an estimate from 0 to 100 of the contribution of AI to the work is calculated:')) ?></p>
+    <p><?= h(tr('Junto al código se calcula una estimación experimental de 0 a 100 de la contribución de la IA a la obra (la metodología está abierta a revisión y no se ha validado científicamente):', 'Alongside the code, an experimental estimate from 0 to 100 of the contribution of AI to the work is calculated (the methodology is open to review and has not been scientifically validated):')) ?></p>
     <p class="formula">IG = G + (100 − G) · P</p>
     <ul>
       <li><?= tr('<b>G</b>, generación efectiva: cuánto contenido generado con IA queda en la obra final, según la parte de la obra afectada y lo que el autor transformó.', '<b>G</b>, effective generation: how much AI-generated content remains in the final work, based on the share of the work affected and what the author transformed.') ?></li>

@@ -28,7 +28,7 @@ $example = oride_compute(['type' => 'LI', 'ia' => 'si', 'ev' => 'si', 'acts' => 
     <section class="card ig-card">
       <h3><?= h(t('ig_title')) ?></h3>
       <p class="ig-sample"><?= h(ig_cat_label($example['cat'])) ?></p>
-      <p class="muted"><?= h(tr('Estima de 0 a 100 cuánto contribuyó la IA a la obra y lo clasifica en seis categorías, de A (muy bajo) a F (extremo). Generar contenido pesa mucho más que documentarse o corregir.', 'Estimates from 0 to 100 how much AI contributed to the work and classifies it into six categories, from A (very low) to F (extreme). Generating content weighs much more than research or proofreading.')) ?></p>
+      <p class="muted"><?= h(tr('Estima de 0 a 100 cuánto contribuyó la IA a la obra y lo clasifica en seis categorías, de A (muy bajo) a F (extremo). Generar contenido pesa mucho más que documentarse o corregir. Es una metodología experimental, abierta a revisión.', 'Estimates from 0 to 100 how much AI contributed to the work and classifies it into six categories, from A (very low) to F (extreme). Generating content weighs much more than research or proofreading. It is an experimental methodology, open to review.')) ?></p>
       <a href="<?= u('indice.php') ?>"><?= h(t('ig_how')) ?></a>
     </section>
   </div>

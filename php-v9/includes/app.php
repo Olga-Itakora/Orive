@@ -10,7 +10,7 @@ require_once __DIR__ . '/i18n.php';
 require_once __DIR__ . '/indice.php';
 require_once __DIR__ . '/categories.php';
 require_once __DIR__ . '/compare.php';
-const ORIDE_VERSION = '9.1.0';
+const ORIDE_VERSION = '9.1.1';
 
 // ---------------------------------------------------------------------------
 // Configuración
@@ -511,9 +511,12 @@ function explain_list(array $r, bool $reader = false): string
 }
 
 /** Aviso cuando se declara IA pero todas las actividades marcadas tienen grado 0. */
-function all_zero_note(array $r, bool $reader = false): string
+function all_zero_note(array $r, bool $reader = false, bool $live = false): string
 {
-    return '<p class="box-warn"' . (!empty($r['all_zero']) ? '' : ' hidden') . ' data-allzero role="status">' . h(t($reader ? 'all_zero_reader' : 'all_zero')) . '</p>';
+    $text = t($reader ? 'all_zero_reader' : 'all_zero');
+    if (!empty($r['all_zero'])) return '<p class="box-warn" data-allzero data-text="' . h($text) . '" role="status">' . h($text) . '</p>';
+    // Oculto y vacío: el texto solo existe cuando hace falta (no se indexa un aviso que no aplica).
+    return $live ? '<p class="box-warn" hidden data-allzero data-text="' . h($text) . '" role="status"></p>' : '';
 }
 
 /** Índice para mostrar: porcentaje entero, o intervalo de enteros (el redondeo es solo para mostrar). */
@@ -626,7 +629,7 @@ function code_box(array $r, array $o = []): string
     // Caja «Índice global»
     $html .= '<div data-index aria-live="polite">' . index_panel($ig, $r, $extra, $intro !== '', $copy) . '</div>'
         . ($live ? '<p class="status" data-status aria-live="polite">' . h($status) . '</p>' : '')
-        . all_zero_note($r, $reader);
+        . all_zero_note($r, $reader, $live);
     if ($actions) {
         $html .= '<div class="box-actions">'
             . '<button type="button" class="btn btn-copy" data-copy-text="' . h(oride_text($r, $intro, $ig, $extra)) . '"' . ($complete ? '' : ' disabled') . '>' . h(t('copy_text')) . '</button>'
