@@ -218,4 +218,13 @@
     });
     f.setAttribute("novalidate", "");
   });
+  // Verificar una entrega: «Editar requisito» / «Editar declaración» siguen al código escrito.
+  $all("[data-edit-for]").forEach(function (a) {
+    var field = document.getElementById(a.getAttribute("data-edit-for"));
+    if (!field) return;
+    field.addEventListener("input", function () {
+      var page = a.getAttribute("data-page"), code = field.value.trim();
+      a.href = code ? page + (page.indexOf("?") < 0 ? "?" : "&") + "from=" + encodeURIComponent(code) : page;
+    });
+  });
 })();

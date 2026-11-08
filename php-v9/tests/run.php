@@ -268,6 +268,14 @@ check('todo a 0: el aviso se muestra', str_contains(code_box(oride_compute($lit(
 check('formulario en vivo: el aviso está vacío hasta que aplica', str_contains($h = code_box(oride_compute($lit(['GEN'], ['GEN' => '2'], ['GEN' => '4'], 'si')), ['live' => true]), 'data-allzero') && !preg_match('/data-allzero[^>]*>[^<]+</', $h));
 check('metodología presentada como experimental, no validada', str_contains(file_get_contents(__DIR__ . '/../indice.php'), 'no se han validado científica ni empíricamente'));
 
+echo "Editar requisito / declaración\n";
+$rt = true;
+foreach (['LI-IGB-EV1-DOC44-GEN24', 'ACA-IGA-EV1-DOC54-ARG10-GEN21-FOR54', 'SC-IA0-EV0', 'MU-IA1-EV1', 'IL-IGA-EV0-REF10-RET40'] as $c) {
+    if (oride_compute(oride_input_from_result(oride_explain($c)['result']))['code'] !== $c) $rt = false;
+}
+check('un código vuelve a dar las mismas respuestas del formulario', $rt);
+check('un código antiguo se edita en el formato actual', oride_compute(oride_input_from_result(oride_explain('LIT-IA1-V1-GEN24')['result']))['code'] === 'LI-IGB-EV1-GEN24');
+
 echo "Textos e idioma\n";
 $r = oride_compute($lit(['DOC'], ['DOC' => '4'], ['DOC' => '4'], 'si'));
 $txt = oride_text($r);

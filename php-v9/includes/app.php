@@ -10,7 +10,7 @@ require_once __DIR__ . '/i18n.php';
 require_once __DIR__ . '/indice.php';
 require_once __DIR__ . '/categories.php';
 require_once __DIR__ . '/compare.php';
-const ORIDE_VERSION = '9.1.1';
+const ORIDE_VERSION = '9.1.2';
 
 // ---------------------------------------------------------------------------
 // Configuración
@@ -236,6 +236,8 @@ function oride_compute(array $in): array
 /** Lee las respuestas de la URL (formulario sin JavaScript o enlace compartido). */
 function oride_input_from_get(): array
 {
+    // «Editar requisito» / «Editar declaración» (comprobar.php): ?from=CÓDIGO marca las respuestas de ese código.
+    if (get('from') !== '' && ($e = oride_explain(mb_substr(get('from'), 0, 200)))['valid']) return oride_input_from_result($e['result']);
     $type = get('type');
     $u = $s = [];
     $acts = [];
@@ -247,6 +249,19 @@ function oride_input_from_get(): array
         }
     }
     return ['type' => $type, 'ia' => get('ia'), 'acts' => $acts, 'u' => $u, 's' => $s, 'ev' => get('ev'), 'q' => get('q'), 'qp' => get('qp')];
+}
+
+/** Respuestas del formulario a partir de un código leído (lo contrario de oride_input_from_get()). */
+function oride_input_from_result(array $r): array
+{
+    $in = ['type' => (string) $r['type'], 'ia' => $r['ia'] === null ? '' : ($r['ia'] ? 'si' : 'no'), 'acts' => [], 'u' => [], 's' => [],
+        'ev' => $r['ev'] === null ? '' : ($r['ev'] ? 'si' : 'no'), 'q' => '', 'qp' => ''];
+    foreach ($r['acts'] as [$act, $level, $scope]) {
+        $in['acts'][] = $act;
+        if ($level !== null) $in['u'][$act] = (string) $level;
+        if ($scope !== null) $in['s'][$act] = (string) $scope;
+    }
+    return $in;
 }
 
 /** Normaliza un código escrito a mano: admite «ORIDE», minúsculas y espacios, «:» o puntos en lugar de guiones. */

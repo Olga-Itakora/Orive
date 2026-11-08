@@ -20,6 +20,12 @@ $icons = ['ok' => '✓', 'fail' => '✗', 'unknown' => '?', 'info' => 'i', 'warn
 $stateLabel = fn(string $st) => t(['ok' => 'vf_r_ok', 'fail' => 'vf_r_fail', 'unknown' => 'vf_r_unknown', 'alert' => 'vf_r_alert'][$st] ?? 'vf_r_info');
 $partLabel = fn(string $st) => t(['ok' => 'vf_p_ok', 'fail' => 'vf_p_fail', 'unknown' => 'vf_p_unknown', 'na' => 'vf_p_na'][$st] ?? 'vf_p_na');
 
+// Debajo de cada código, un enlace para editarlo en su formulario con las respuestas ya marcadas.
+// El enlace lleva el código (?from=…); oride.js lo actualiza mientras se escribe.
+$editLink = function (string $page, string $label, string $field, ?array $parsed, string $raw) {
+    $code = $parsed && $parsed['valid'] ? $parsed['result']['code'] : $raw;
+    return '<p class="vf-edit"><a class="link-24" data-edit-for="' . $field . '" data-page="' . h(u($page)) . '" href="' . h(u($page . ($code !== '' ? '?from=' . rawurlencode($code) : ''))) . '">' . h($label) . '</a></p>';
+};
 $field = function (string $name, string $label, ?array $parsed, string $raw) {
     $err = $parsed && !$parsed['valid'] ? $parsed['error'] : '';
     return '<div class="field"><label for="' . $name . '">' . h($label) . '</label>'
@@ -39,7 +45,9 @@ page_start(t('cmp_title'), tr('Comprueba si el Código ORIDE de una entrega es c
     <form class="card vf-form" method="get" action="<?= u('comprobar.php') ?>">
       <?= lang_field() ?>
       <?= $field('r', t('cmp_req'), $req, $rawReq) ?>
+      <?= $editLink('instituciones.php', tr('Editar requisito', 'Edit requirement'), 'r', $req, $rawReq) ?>
       <?= $field('d', t('cmp_decl'), $decl, $rawDecl) ?>
+      <?= $editLink('crear.php', tr('Editar declaración', 'Edit declaration'), 'd', $decl, $rawDecl) ?>
       <fieldset class="choices q"><legend><?= h(t('vf_mode')) ?></legend><div class="choice-list">
         <?php foreach (VERIFY_MODES as $m) echo choice('mode', $m, 'radio', $mode === $m, h(t('vf_mode_' . $m)), t('vf_mode_' . $m . '_d')); ?>
       </div></fieldset>
@@ -118,7 +126,6 @@ page_start(t('cmp_title'), tr('Comprueba si el Código ORIDE de una entrega es c
           <p class="meta"><?= h(t('vf_version', VERIFY_VERSION, IG_CAT_VERSION . ' · ' . IG_CURRENT)) ?></p>
         </section>
       <?php endif; ?>
-      <p><a class="link-24" href="<?= u('instituciones.php') ?>"><?= h(tr('Crear un requisito', 'Create a requirement')) ?></a></p>
     </div>
   </div>
 </div>

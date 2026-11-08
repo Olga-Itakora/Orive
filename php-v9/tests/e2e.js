@@ -228,6 +228,15 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.fill('#d', 'SC-IGC-EV1-RED21');
   await page.click('main form button.btn-primary');
   ok('verificar: los dos códigos tienen que ser válidos (error en la columna izquierda)', (await page.locator('#d-error').innerText()).includes('IGA') && (await page.locator('.cmp-result').count()) === 0);
+  await page.goto(B + 'comprobar.php?r=ACA-IGA-EV1-DOC54-ARG10-GEN21-FOR54&d=LI-IGB-EV1-DOC44-GEN24');
+  ok('verificar: sin el enlace «Crear un requisito» en la columna derecha', (await page.locator('.vf-out a', { hasText: 'Crear un requisito' }).count()) === 0);
+  ok('verificar: «Editar requisito» y «Editar declaración» debajo de cada código', await page.evaluate(() => { const r = document.getElementById('r').closest('.field').nextElementSibling, d = document.getElementById('d').closest('.field').nextElementSibling; return r.textContent.trim() === 'Editar requisito' && d.textContent.trim() === 'Editar declaración'; }));
+  await page.click('text=Editar requisito');
+  ok('«Editar requisito» abre «Crear un requisito» con las respuestas marcadas', page.url().includes('instituciones.php') && (await waitCode('ACA-IGA-EV1DOC54-ARG10-GEN21-FOR54')) === 'ACA-IGA-EV1DOC54-ARG10-GEN21-FOR54' && await page.isChecked('input[name=u_ACA_ARG][value="1"]') && (await page.locator('.tabs [aria-current="page"]').innerText()).includes('Crear un requisito'));
+  await page.goBack();
+  await page.fill('#d', 'MU-IGB-EV0\nGEN24');
+  await page.click('text=Editar declaración');
+  ok('«Editar declaración» abre «Crea tu declaración» con el código escrito (sin verificar)', page.url().includes('crear.php') && (await waitCode('MU-IGB-EV0GEN24')) === 'MU-IGB-EV0GEN24' && await page.isChecked('input[name=type][value=MU]'));
   // Caso especial: GEN24 frente a GEN30, en las tres comparaciones
   await page.goto(B + 'comprobar.php?r=LI-IGB-EV1-GEN24&d=LI-IGA-EV1-GEN30&mode=digits');
   ok('GEN24/GEN30 por grado y alcance: no compatible, aunque la categoría sea inferior', (await page.locator('#vf-verdict').innerText()).includes('Declaración No Compatible') && (await page.locator('.vf-explain').first().innerText()).includes('Una categoría baja no compensa los límites por actividad'));

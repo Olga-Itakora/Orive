@@ -754,3 +754,5 @@ textarea.mono { font-family: var(--mono); text-transform: uppercase; }
 .example-card { margin: 12px 0; }
 .example-card h4 { margin: 0 0 4px; font-size: 1rem; }
 .example-card .code-example { margin: 8px 0; }
+.vf-form .field { margin-bottom: 4px; }
+.vf-edit { margin: 0 0 16px; font-size: 0.875rem; }
