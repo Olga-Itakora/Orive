@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORIDE · prueba v2</title>
+<!--
+  ORIDE · prueba v2 — prototipo autónomo (HTML, CSS y JavaScript en un solo archivo; se abre directamente en el navegador).
+  Formulario simplificado + la caja de la prueba v1, que se actualiza en vivo.
+  El cálculo es el mismo algoritmo de la web (ORIDE-IG-1.0-experimental, categorías ORIDE-IG-CAT-1.0, taxonomía ORIDE Code 3.1).
+-->
+<style>
+  :root {
+    --paper: #faf8f4; --surface: #fff; --ink: #1c2526; --muted: #5b6b6c; --line: #e3e8e6; --line-strong: #c9d3d1;
+    --petrol-50: #eef6f5; --petrol-100: #d5e9e7; --petrol-200: #a9d2cd; --petrol-600: #1b5a5b; --petrol-700: #154849; --petrol-800: #0e3b3c; --petrol-900: #0a2b2c;
+    --accent: #2ba39a; --danger: #a3261f;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: 16px; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--font); }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 96px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  .muted { color: var(--muted); }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  .layout { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+  @media (min-width: 960px) {
+    .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 440px); }
+    .aside { position: sticky; top: 16px; }
+  }
+
+  /* Formulario */
+  .form { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .q { border: 0; margin: 0; padding: 0 0 24px; min-width: 0; }
+  .q + .q { border-top: 1px solid var(--line); padding-top: 20px; }
+  .q legend, .q h2 { font-weight: 600; font-size: 1.0625rem; padding: 0; margin: 0 0 10px; }
+  .q legend { float: left; width: 100%; }
+  .q legend + * { clear: both; }
+  .hint { font-size: 0.875rem; color: var(--muted); margin: -4px 0 12px; }
+
+  /* Opciones sin radio-button: el input queda oculto y la etiqueta es el botón */
+  .opts { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .opts.two { grid-template-columns: repeat(2, minmax(0, 120px)); }
+  .opt { position: relative; }
+  .opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .opt label { display: flex; align-items: center; justify-content: center; text-align: center; min-height: 36px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); font-size: 0.875rem; line-height: 1.25; cursor: pointer; }
+  .opt label:hover { border-color: var(--petrol-600); background: var(--petrol-50); }
+  .opt input:checked + label { background: var(--petrol-800); border-color: var(--petrol-800); color: #fff; font-weight: 600; }
+  .opt input:checked + label::before { content: "✓ "; white-space: pre; }
+  .opt input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  /* Actividades */
+  .acts { display: grid; gap: 10px; }
+  .act { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .act.used { border-color: var(--petrol-600); background: var(--petrol-50); }
+  .act-name { font-weight: 600; margin: 0; }
+  .act-desc { font-size: 0.8125rem; color: var(--muted); margin: 2px 0 10px; }
+  .selects { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); }
+  .sel label { display: block; font-size: 0.8125rem; font-weight: 500; margin-bottom: 2px; }
+  .sel select { width: 100%; max-width: 460px; min-height: 36px; padding: 4px 8px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); font: 0.875rem var(--font); color: var(--ink); }
+  .sel select.missing { border-color: var(--danger); }
+
+  /* Caja de la declaración (de la prueba v1) */
+  .decl { background: var(--surface); border: 2px solid var(--petrol-800); border-radius: 12px; padding: 16px 16px 12px; }
+  .decl svg { display: block; width: 100%; height: auto; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--petrol-800); background: var(--surface); color: var(--petrol-800); font: 500 0.8125rem var(--font); cursor: pointer; }
+  .btn:hover:not(:disabled) { background: var(--petrol-50); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .code-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; border-top: 1px solid var(--line); padding-top: 10px; font-size: 0.8125rem; color: var(--muted); }
+  .code-row code { font: 0.8125rem var(--mono); color: var(--ink); }
+  .link-btn { background: none; border: 0; padding: 4px 2px; min-height: 24px; font: inherit; color: var(--petrol-800); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+  .link-btn:disabled { color: var(--muted); text-decoration: none; cursor: not-allowed; }
+  details.breakdown { width: 100%; }
+  details.breakdown > summary { list-style: none; display: inline; }
+  details.breakdown > summary::-webkit-details-marker { display: none; }
+  details.breakdown > summary::after { content: " ▾"; }
+  details.breakdown[open] > summary::after { content: " ▴"; }
+  .breakdown-body { margin-top: 8px; font-size: 0.8125rem; color: var(--ink); background: var(--petrol-50); border-radius: 8px; padding: 10px 12px; }
+  .breakdown-body ul { margin: 0; padding-left: 18px; }
+  .breakdown-body li { margin: 3px 0; }
+  .breakdown-body .mono { font-family: var(--mono); font-weight: 600; }
+  .note { font-size: 0.75rem; color: var(--muted); margin: 8px 0 0; }
+
+  /* Móvil: barra fija con el índice, mientras la caja no está a la vista */
+  .mini { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px; background: var(--petrol-900); color: #fff; font-size: 0.875rem; text-decoration: none; }
+  .mini b { font-weight: 600; }
+  @media (min-width: 960px) { .mini { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Crea tu declaración</h1>
+  <p class="lead">Responde a tres preguntas y, si quieres, detalla en qué usaste la IA. La caja se actualiza mientras respondes. No se guarda nada.</p>
+
+  <div class="layout">
+    <form class="form" id="form" autocomplete="off" novalidate>
+      <fieldset class="q" id="q-type">
+        <legend>Tipo de obra</legend>
+        <div class="opts" id="types"></div>
+      </fieldset>
+
+      <fieldset class="q" id="q-ia" hidden>
+        <legend>¿Se ha utilizado inteligencia artificial durante la elaboración de esta obra?</legend>
+        <div class="opts two">
+          <div class="opt"><input type="radio" name="ia" id="ia-si" value="1"><label for="ia-si">Sí</label></div>
+          <div class="opt"><input type="radio" name="ia" id="ia-no" value="0"><label for="ia-no">No</label></div>
+        </div>
+      </fieldset>
+
+      <fieldset class="q" id="q-ev" hidden>
+        <legend id="ev-legend">¿Conservas evidencias que permitan documentar que no has usado IA?</legend>
+        <p class="hint" id="ev-hint">Por ejemplo: versiones de trabajo, borradores, historiales o archivos originales que muestren tu proceso de creación.</p>
+        <div class="opts two">
+          <div class="opt"><input type="radio" name="ev" id="ev-si" value="1"><label for="ev-si">Sí</label></div>
+          <div class="opt"><input type="radio" name="ev" id="ev-no" value="0"><label for="ev-no">No</label></div>
+        </div>
+      </fieldset>
+
+      <section class="q" id="q-acts" hidden aria-labelledby="acts-title">
+        <h2 id="acts-title">Actividades (opcional)</h2>
+        <p class="hint">Indica cómo usaste la IA en cada actividad. Las que dejes en «No utilicé IA» no aparecen en el código.</p>
+        <div class="acts" id="acts"></div>
+      </section>
+    </form>
+
+    <div class="aside" id="aside">
+      <section class="decl" id="decl" aria-labelledby="decl-label">
+        <h2 id="decl-label" class="sr-only">Declaración ORIDE</h2>
+        <div id="figure"></div>
+        <p class="sr-only" id="figure-text" aria-live="polite"></p>
+        <div class="actions">
+          <button type="button" class="btn" id="dl-png">Descargar imagen PNG</button>
+          <button type="button" class="btn" id="dl-svg">Descargar imagen SVG</button>
+        </div>
+        <div class="code-row">
+          <span>Código ORIDE <code id="code-text"></code></span>
+          <button type="button" class="link-btn" id="copy-code">Copiar código</button>
+          <details class="breakdown" id="breakdown">
+            <summary class="link-btn">Desglose del cálculo</summary>
+            <div class="breakdown-body" id="breakdown-body"></div>
+          </details>
+        </div>
+        <p class="sr-only" id="announce" aria-live="polite"></p>
+      </section>
+      <p class="note">El Índice Global ORIDE es una estimación experimental a partir de lo declarado; no es un porcentaje certificado de autoría de IA. Algoritmo <span id="v-alg"></span> · categorías <span id="v-cat"></span> · taxonomía <span id="v-tax"></span>.</p>
+    </div>
+  </div>
+</main>
+<a class="mini" id="mini" href="#decl"><span id="mini-text">Declaración ORIDE</span><b>Ver caja ↓</b></a>
+
+<script>
+// ===== ENGINE START (mismo algoritmo que el motor PHP; datos copiados de él) =====
+var D = {"version":"ORIDE-IG-1.0-experimental","catVersion":"ORIDE-IG-CAT-1.0","taxonomy":"ORIDE Code 3.1","factors":[0.0,0.0,0.2,0.5,0.85,1.0],"scope":[[0.0,0.05],[0.05,0.25],[0.25,0.5],[0.5,0.75],[0.75,1.0]],"weights":{"LI":{"DOC":["aux",0.05],"IDE":["aux",0.1],"EST":["aux",0.15],"GEN":["gen",null],"REV":["aux",0.1],"FOR":["aux",0.05]},"SC":{"DOC":["aux",0.05],"HIP":["aux",0.1],"MET":["aux",0.1],"DAT":["aux",0.05],"ANA":["aux",0.05],"INT":["aux",0.05],"RED":["gen",null],"REV":["aux",0.05],"FOR":["aux",0.05]},"MU":{"IDE":["aux",0.1],"COM":["gen",null],"ARR":["gen",null],"GEN":["gen",null],"INT":["gen",null],"MIX":["aux",0.1],"MAS":["aux",0.05],"RES":["aux",0.05]},"PH":{"PLA":["aux",0.1],"CAP":["aux",0.1],"REV":["aux",0.05],"RET":["aux",0.1],"MOD":["gen",null],"GEN":["gen",null],"REC":["gen",null]},"IL":{"REF":["aux",0.05],"IDE":["aux",0.1],"COM":["aux",0.15],"GEN":["gen",null],"TRA":["gen",null],"RET":["aux",0.05],"AMP":["gen",null],"VAR":["aux",0.05],"REV":["aux",0.05],"FIN":["aux",0.05]},"DS":{"IDE":["aux",0.1],"VAR":["aux",0.1],"COM":["aux",0.15],"GEN":["gen",null],"MOD":["aux",0.05],"ADA":["aux",0.05],"FIN":["aux",0.05]},"AU":{"GUI":["aux",0.15],"STO":["aux",0.1],"GEN":["gen",null],"VOZ":["gen",null],"MON":["aux",0.1],"EFX":["gen",null],"DOB":["gen",null],"POS":["aux",0.05]},"SW":{"REQ":["aux",0.05],"ARQ":["aux",0.15],"COD":["gen",null],"REF":["aux",0.1],"DEP":["aux",0.1],"PRU":["aux",0.05],"DOC":["aux",0.05]},"TR":{"DOC":["aux",0.05],"INT":["aux",0.1],"GEN":["gen",null],"ADA":["aux",0.1],"REV":["aux",0.1],"STY":["aux",0.05],"LOC":["aux",0.05],"VAL":["aux",0.05]},"ACA":{"DOC":["aux",0.05],"IDE":["aux",0.08],"EST":["aux",0.08],"ANA":["aux",0.1],"ARG":["aux",0.12],"GEN":["gen",null],"REV":["aux",0.07],"FOR":["aux",0.03],"REF":["aux",0.02],"VAL":["aux",0.05]}},"types":{"SC":{"name":"Investigación científica","acts":[["DOC","Búsqueda y revisión bibliográfica","Localización, análisis y síntesis de publicaciones y antecedentes científicos."],["HIP","Preguntas e hipótesis","Formulación y exploración de preguntas de investigación, hipótesis y variables."],["MET","Diseño metodológico","Diseño de estudios, experimentos, protocolos, instrumentos y procedimientos."],["DAT","Recogida y preparación de datos","Extracción, etiquetado, limpieza, transformación y generación de datos sintéticos."],["ANA","Análisis de datos","Aplicación de técnicas estadísticas, computacionales y de modelado para analizar datos."],["INT","Interpretación de resultados","Exploración de hallazgos, identificación de patrones, discusión e interpretación científica."],["RED","Redacción científica","Elaboración de secciones, resúmenes, tablas, figuras y otros contenidos científicos."],["REV","Revisión científica","Evaluación crítica de la metodología, argumentación, resultados, conclusiones y limitaciones."],["FOR","Revisión formal y presentación","Corrección lingüística, referencias, formato y adaptación a normas editoriales."]]},"LI":{"name":"Literatura","acts":[["DOC","Documentación","Búsqueda de información, datos, fuentes, antecedentes y referencias para elaborar el texto."],["IDE","Generación de ideas","Exploración de conceptos, argumentos, tramas, personajes, enfoques o alternativas creativas."],["EST","Estructuración","Planificación de capítulos, secciones, escenas y organización global del texto."],["GEN","Generación de contenido","Producción de frases, párrafos, capítulos, diálogos u otros contenidos textuales."],["REV","Revisión de contenido","Análisis de coherencia, argumentación, continuidad, consistencia y desarrollo de ideas."],["FOR","Revisión de formato","Corrección de ortografía, gramática, puntuación, claridad, estilo y expresión."]]},"MU":{"name":"Música y sonido","acts":[["IDE","Ideación musical","Exploración de conceptos sonoros, estilos, referencias, motivos y propuestas musicales."],["COM","Composición","Generación o desarrollo de melodías, armonías, ritmos y estructuras musicales."],["ARR","Arreglos musicales","Orquestación, instrumentación, armonización y adaptación de composiciones existentes."],["GEN","Generación sonora","Creación de voces, instrumentos, fragmentos musicales, efectos o sonidos sintéticos."],["INT","Interpretación","Asistencia o generación de interpretaciones vocales e instrumentales y sus características expresivas."],["MIX","Mezcla y producción","Procesamiento, ecualización, balance, espacialización y combinación de pistas."],["MAS","Masterización","Optimización del sonido final, dinámica, niveles, equilibrio espectral y preparación de distribución."],["RES","Restauración de audio","Reducción de ruido, reparación, separación de fuentes y recuperación de grabaciones."]]},"PH":{"name":"Fotografía","acts":[["PLA","Planificación de la toma","Propuestas de encuadre, iluminación, localización, composición y configuración previa."],["CAP","Captura asistida","Enfoque, exposición, seguimiento, selección de tomas y otras operaciones de captura mediante IA."],["REV","Revelado y ajustes técnicos","Ajustes de exposición, color, balance de blancos, contraste y procesamiento de archivos fotográficos."],["RET","Retoque fotográfico","Corrección de imperfecciones, ajustes locales, tratamiento de retratos y modificaciones de apariencia."],["MOD","Modificación de elementos","Eliminación, sustitución, incorporación o alteración de objetos, personas y partes de una escena."],["GEN","Generación visual","Creación de imágenes completas o componentes visuales sintéticos mediante IA."],["REC","Reconstrucción y mejora","Ampliación, completado de regiones, recuperación de detalle, reducción de ruido y mejora de resolución."]]},"IL":{"name":"Ilustración","acts":[["REF","Documentación y referencias","Exploración de referentes visuales, estilos, materiales, anatomía y otros recursos."],["IDE","Conceptualización","Generación de conceptos visuales, personajes, escenarios y alternativas creativas."],["COM","Composición y bocetado","Elaboración de bocetos, encuadres, distribución de elementos y organización visual."],["GEN","Generación de imágenes","Creación de ilustraciones completas, personajes, fondos, objetos y otros elementos gráficos."],["TRA","Transformación de imágenes","Transformación de bocetos o imágenes existentes, variaciones de estilo y modificaciones visuales."],["RET","Retoque y edición","Ajuste de colores, iluminación, proporciones, detalles y corrección de imperfecciones."],["AMP","Ampliación y reconstrucción","Extensión del lienzo, completado de regiones, reconstrucción y mejora de resolución."],["VAR","Variantes y adaptación","Generación de versiones para estilos, composiciones, tamaños o soportes diferentes."],["REV","Revisión visual","Evaluación de composición, legibilidad, coherencia estética y adecuación al encargo."],["FIN","Preparación final","Optimización, separación de elementos, preparación de archivos y exportación."]]},"DS":{"name":"Diseño","acts":[["IDE","Conceptualización","Definición de propuestas, conceptos, estilos, soluciones y direcciones creativas."],["VAR","Exploración de alternativas","Generación y comparación de variantes de diseño, estilos, colores y configuraciones."],["COM","Composición visual","Distribución de elementos, jerarquía visual, organización espacial y composición."],["GEN","Generación de elementos","Producción de gráficos, iconos, logotipos, texturas, modelos y otros recursos visuales."],["MOD","Edición y transformación","Modificación de formas, materiales, colores, proporciones o elementos visuales existentes."],["ADA","Adaptación de formatos","Adecuación de diseños a distintos tamaños, soportes, medios y contextos de uso."],["FIN","Producción final","Preparación técnica de archivos, optimización, exportación y generación de entregables."]]},"AU":{"name":"Audiovisual","acts":[["GUI","Guion y narrativa","Creación o revisión de guiones, diálogos, secuencias y planteamientos narrativos."],["STO","Storyboard y previsualización","Generación de bocetos de planos, animáticas y propuestas de planificación visual."],["GEN","Generación audiovisual","Creación de imágenes en movimiento, secuencias, animaciones o escenas sintéticas."],["VOZ","Voces y sonido","Generación o transformación de voces, narraciones, sonidos y elementos de audio."],["MON","Montaje y edición","Selección, organización, sincronización y edición de planos y secuencias."],["EFX","Efectos visuales","Creación, modificación o integración de efectos, elementos y composiciones visuales."],["DOB","Doblaje y subtitulado","Traducción, síntesis o adaptación de voces, sincronización labial y creación de subtítulos."],["POS","Posproducción","Corrección de color, mejora de imagen y sonido, restauración y acabado técnico."]]},"SW":{"name":"Software y programación","acts":[["REQ","Análisis de requisitos","Identificación, especificación y organización de funcionalidades, restricciones y necesidades."],["ARQ","Diseño y arquitectura","Diseño de componentes, interfaces, estructuras de datos y organización del sistema."],["COD","Generación de código","Producción de funciones, clases, módulos, scripts y otros componentes de software."],["REF","Refactorización","Reestructuración y mejora del código existente, manteniendo su comportamiento previsto."],["DEP","Depuración","Detección, diagnóstico y propuesta de soluciones para errores de software."],["PRU","Pruebas y validación","Generación de pruebas, casos de prueba, datos de ensayo y análisis de resultados."],["DOC","Documentación técnica","Elaboración de comentarios, manuales, explicaciones, especificaciones y documentación de API."]]},"TR":{"name":"Traducción","acts":[["DOC","Documentación y terminología","Búsqueda de equivalencias terminológicas, referencias culturales, contexto lingüístico y recursos de apoyo a la traducción."],["INT","Interpretación del original","Análisis del significado, ambigüedades, expresiones idiomáticas, referencias culturales y matices del contenido original."],["GEN","Generación de traducciones","Producción mediante IA de traducciones completas o parciales de textos, diálogos u otros contenidos entre idiomas."],["ADA","Adaptación lingüística y cultural","Adaptación de expresiones, referencias culturales, registros, tono y convenciones al público y contexto de destino."],["REV","Revisión de traducciones","Evaluación y corrección de fidelidad, precisión terminológica, omisiones, errores de sentido y coherencia respecto al original."],["STY","Revisión de estilo","Mejora de naturalidad, fluidez, claridad, uniformidad del registro y calidad expresiva en el idioma de destino."],["LOC","Localización","Adaptación de interfaces, videojuegos, aplicaciones, formatos, unidades, convenciones y otros elementos a un mercado o entorno lingüístico."],["VAL","Validación y control de calidad","Comprobación de consistencia global, cumplimiento de glosarios, requisitos lingüísticos y criterios de calidad de la traducción."]]},"ACA":{"name":"Trabajo académico","acts":[["DOC","Documentación y búsqueda de fuentes","Uso de IA para localizar, explorar, resumir o comprender información y fuentes relacionadas con el trabajo académico."],["IDE","Generación y desarrollo de ideas","Uso de IA para proponer, explorar o desarrollar temas, enfoques, preguntas y posibles soluciones."],["EST","Planificación y estructuración del trabajo","Uso de IA para planificar, organizar o estructurar el desarrollo y la presentación del trabajo."],["ANA","Análisis de información, datos o materiales","Uso de IA para analizar información, datos, textos, documentos u otros materiales relacionados con el trabajo."],["ARG","Elaboración de razonamientos y argumentación","Uso de IA para construir, desarrollar, contrastar o revisar razonamientos, explicaciones y argumentos."],["GEN","Generación de contenido académico","Uso de IA para producir textos, respuestas, soluciones u otros contenidos que puedan incorporarse al trabajo académico."],["REV","Revisión del contenido","Uso de IA para revisar la coherencia, precisión, completitud y organización del contenido académico."],["FOR","Revisión formal y de estilo","Uso de IA para mejorar aspectos lingüísticos, estilísticos y de presentación del trabajo, sin modificar sustancialmente su contenido."],["REF","Gestión de referencias y citas","Uso de IA para identificar, organizar, formatear o comprobar referencias bibliográficas y citas."],["VAL","Comprobación y validación de información","Uso de IA para comprobar afirmaciones, cálculos, resultados, soluciones o información incluida en el trabajo."]]}},"legacy":{"SCI":"SC","LIT":"LI","MUS":"MU","PHO":"PH","ILU":"IL","DES":"DS","AUD":"AU","SOF":"SW","TRA":"TR"},"levels":["No se utilizó IA","Se consultaron los resultados, pero no se incorporaron","Se creó algo propio usando los resultados como referencia","Se incorporaron los resultados transformados sustancialmente","Se incorporaron los resultados transformados parcialmente","Se incorporaron los resultados prácticamente sin cambios"],"scopeLabels":["Menos del 5%","Del 5% al 25%","Del 25% al 50%","Del 50% al 75%","Del 75% al 100%"],"cats":{"A":[0.0,10.0],"B":[10.0,25.0],"C":[25.0,50.0],"D":[50.0,75.0],"E":[75.0,90.0],"F":[90.0,100.0]},"catLabels":{"A":"Muy bajo","B":"Bajo","C":"Moderado","D":"Alto","E":"Muy alto","F":"Extremo"},"levelsAuthor":["No utilicé IA","Consulté los resultados, pero no los incorporé","Creé algo propio usando los resultados como referencia","Incorporé los resultados transformados sustancialmente","Incorporé los resultados transformados parcialmente","Incorporé los resultados prácticamente sin cambios"]};
+
+function normalize(s) {
+  s = String(s).toUpperCase().trim();
+  s = s.replace(/^((C[OÓ]DIGO|CODE)\s+)?ORIDE(\s+CODE)?[\s:]*/, "");
+  s = s.replace(/[\s·_—–.,;:\/+]+/g, "-");
+  return s.replace(/-+/g, "-").replace(/^-|-$/g, "");
+}
+
+/** Lee un código ORIDE. Devuelve {valid, error, r} con r = {type, ia, ev, acts:[[act, level, scope]], cat, keepIa1, declaredCat}. */
+function parseCode(raw) {
+  var code = normalize(raw);
+  var tok = code === "" ? [] : code.split("-");
+  if (tok.length < 2) return { valid: false, error: "Un código ORIDE empieza por el tipo de obra y el uso de IA, por ejemplo LI-IA0-EV0 o LI-IGB-EV1-GEN24." };
+  var type = tok.shift();
+  if (D.legacy[type]) type = D.legacy[type];
+  if (!D.types[type]) return { valid: false, error: "«" + type + "» no es un tipo de obra de ORIDE." };
+  var ia;
+  if (/^(IA[01]|IG[A-Z])$/.test(tok[0] || "")) ia = tok.shift();
+  else if (tok.length && /^([A-Z]{3}\d*|E?V[01]?)$/.test(tok[0])) ia = "IA1";
+  else ia = tok.shift();
+  var declaredCat = null;
+  var m = /^IG([A-Z])$/.exec(ia || "");
+  if (m) {
+    if (!D.cats[m[1]]) return { valid: false, error: "«" + ia + "» no es una categoría del Índice Global (van de IGA a IGF)." };
+    declaredCat = m[1];
+  } else if (ia !== "IA0" && ia !== "IA1") {
+    return { valid: false, error: "Después del tipo de obra va IA0, IGA…IGF o IA1." };
+  }
+  var isV = function (x) { return /^E?V[01]?$/.test(x); };
+  var ev = "";
+  if (tok.length && isV(tok[0])) ev = tok.shift();
+  else if (tok.length && isV(tok[tok.length - 1])) ev = tok.pop();
+  var evNum = ev === "" ? null : (ev.slice(-1) === "0" ? 0 : 1);
+  if (ia === "IA0") {
+    if (tok.length) return { valid: false, error: "Con IA0 (sin IA) no se indican actividades." };
+    return finish({ type: type, ia: 0, ev: evNum, acts: [], keepIa1: false, declaredCat: null });
+  }
+  var acts = {}, seen = [];
+  for (var i = 0; i < tok.length; i++) {
+    var t = tok[i];
+    if (isV(t)) return { valid: false, error: "Las evidencias van justo después del uso de IA." };
+    var am = /^([A-Z]{3})(\d*)$/.exec(t);
+    var known = am && D.types[type].acts.some(function (a) { return a[0] === am[1]; });
+    if (!known) return { valid: false, error: "«" + t.replace(/\d+$/, "") + "» no es una actividad de " + D.types[type].name + "." };
+    if (seen.indexOf(am[1]) >= 0) return { valid: false, error: "La actividad " + am[1] + " está repetida." };
+    if (am[2].length !== 2) return { valid: false, error: "En " + t + " faltan cifras: cada actividad lleva dos (grado y alcance), por ejemplo " + am[1] + "42." };
+    var level = +am[2][0], scope = +am[2][1];
+    if (level > 5) return { valid: false, error: "En " + t + ", el grado va de 0 a 5." };
+    if (level < 2 && scope !== 0) return { valid: false, error: "En " + t + ", con los grados 0 y 1 la segunda cifra es 0." };
+    if (scope > 4) return { valid: false, error: "En " + t + ", el alcance va de 0 a 4." };
+    seen.push(am[1]);
+    acts[am[1]] = [level, level >= 2 ? scope : null];
+  }
+  var ordered = D.types[type].acts.filter(function (a) { return acts[a[0]]; }).map(function (a) { return [a[0], acts[a[0]][0], acts[a[0]][1]]; });
+  var res = finish({ type: type, ia: 1, ev: evNum, acts: ordered, keepIa1: ia === "IA1" && ordered.length > 0, declaredCat: declaredCat });
+  if (declaredCat && ordered.length) {
+    if (!res.r.cat) return { valid: false, error: "IG" + declaredCat + " indica una categoría, pero las actividades no permiten calcular el índice (todas están a 0)." };
+    if (res.r.cat !== declaredCat) return { valid: false, error: "El código dice IG" + declaredCat + ", pero el índice calculado con sus actividades corresponde a IG" + res.r.cat + "." };
+  }
+  return res;
+}
+
+function finish(r) {
+  r.allZero = r.ia === 1 && r.acts.length > 0 && r.acts.every(function (a) { return a[1] === 0; });
+  r.ig = computeIndex(r);
+  r.cat = null; r.catSource = null;
+  if (r.ia === 1) {
+    if (r.ig.status === "ok") { r.cat = classify(r.ig.IG[0], r.ig.IG[1]); r.catSource = r.keepIa1 ? "derived" : "computed"; }
+    else if (!r.acts.length && r.declaredCat) { r.cat = r.declaredCat; r.catSource = "declared"; }
+  }
+  var term = r.ia === 0 ? "IA0" : (r.keepIa1 ? "IA1" : (r.cat ? "IG" + r.cat : "IA1"));
+  r.lines = [r.type + "-" + term + (r.ev === null ? "" : "-EV" + r.ev)];
+  if (r.acts.length) r.lines.push(r.acts.map(function (a) { return a[0] + a[1] + (a[1] >= 2 ? a[2] : 0); }).join("-"));
+  r.code = r.lines.join("-");
+  return { valid: true, r: r };
+}
+
+/** Índice Global: IG = G + (100 − G) · P, con intervalos (ig_from_result del motor PHP, sin la pregunta de proporción). */
+function computeIndex(r) {
+  var out = { status: "not_calculable", reason: null, G: null, P: null, IG: null, q: null, rows: [] };
+  if (r.ia === 0) { out.status = "ok"; out.G = [0, 0]; out.P = [0, 0]; out.IG = [0, 0]; return out; }
+  if (!r.acts.length) { out.reason = "no_acts"; return out; }
+  if (r.allZero) { out.reason = "all_zero"; return out; }
+  var W = D.weights[r.type];
+  var gen = [], auxLo = 0, auxHi = 0;
+  r.acts.forEach(function (a) {
+    var w = W[a[0]], f = D.factors[a[1]], S = a[2] === null ? [0, 0] : D.scope[a[2]];
+    var row = { act: a[0], role: w[0], level: a[1], scope: a[2], factor: f, S: S, weight: w[1], contrib: null };
+    if (w[0] === "gen") gen.push({ f: f, S: S });
+    else { row.contrib = [w[1] * f * S[0], w[1] * f * S[1]]; auxLo += row.contrib[0]; auxHi += row.contrib[1]; }
+    out.rows.push(row);
+  });
+  var G = [0, 0];
+  var used = gen.filter(function (g) { return g.f > 0; });
+  if (used.length) {
+    var fs = used.map(function (g) { return g.f; });
+    var q = [Math.min.apply(null, used.map(function (g) { return g.S[0]; })), Math.max.apply(null, used.map(function (g) { return g.S[1]; }))];
+    out.q = q;
+    G = [100 * q[0] * Math.min.apply(null, fs), 100 * q[1] * Math.max.apply(null, fs)];
+  }
+  var P = [Math.min(1, auxLo), Math.min(1, auxHi)];
+  var comb = function (g, p) { return Math.min(100, g + (100 - g) * p); };
+  out.status = "ok"; out.G = G; out.P = P; out.IG = [comb(G[0], P[0]), comb(G[1], P[1])];
+  return out;
+}
+
+/** Categoría por el punto medio, sin redondear: A si m ≤ 10; B si m ≤ 25; … ; F si m > 90. */
+function classify(lo, hi) {
+  var m = (lo + hi) / 2;
+  var cats = Object.keys(D.cats);
+  for (var i = 0; i < cats.length; i++) if (m <= D.cats[cats[i]][1]) return cats[i];
+  return "F";
+}
+// ===== ENGINE END =====
+
+// ===== Presentación =====
+var SVGNS = "http://www.w3.org/2000/svg";
+var W = 720, X0 = 40, X1 = 680; // se ajustan en figureSVG() según el ancho
+var LEVEL_WORD = { A: "muy bajo", B: "bajo", C: "moderado", D: "alto", E: "muy alto", F: "extremo" };
+var NB = " "; // espacio que no se parte: «13 %»
+var EV_TEXT = "Se puede mostrar el proceso de creación";
+var view = null;   // lo que muestra la caja
+var state = { type: null, ia: null, ev: null, acts: {} }; // acts: { DOC: [grado, alcance|null] }
+
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function pct(x) { return Math.round(x); }
+function num(x, d) { return (Math.round(x * Math.pow(10, d)) / Math.pow(10, d)).toString().replace(".", ","); }
+function px(v) { return X0 + (X1 - X0) * v / 100; }
+function actName(type, act) { return D.types[type].acts.filter(function (a) { return a[0] === act; })[0][1]; }
+
+/**
+ * De las respuestas a lo que muestra la caja.
+ * view: {typeName, title, body, mid (0–100 o null), interval, cat, ev, lines, complete, r}
+ */
+function buildView() {
+  var v = { typeName: null, title: "", body: "", mid: null, interval: null, cat: null, ev: state.ev === 1, lines: [], complete: false, r: null };
+  if (!state.type) {
+    v.title = "Empieza por el tipo de obra"; v.body = "Responde a las preguntas y aquí verás cuánto aportó la IA a tu obra.";
+    v.lines = ["TIPO–IA–EV–"]; return v;
+  }
+  v.typeName = D.types[state.type].name;
+  var evPart = state.ev === null ? "-EV–" : "-EV" + state.ev;
+  if (state.ia === null) {
+    v.title = "¿Usaste IA?"; v.body = "Indica si se utilizó inteligencia artificial en esta obra.";
+    v.lines = [state.type + "-IA–" + evPart]; return v;
+  }
+  if (state.ia === 0) {
+    v.title = "Obra 100" + NB + "% libre de IA"; v.body = "La persona autora declara que no utilizó inteligencia artificial en esta obra.";
+    v.mid = 0;
+    v.lines = [state.type + "-IA0" + evPart];
+    v.complete = state.ev !== null;
+    if (v.complete) v.r = parseCode(v.lines[0]).r;
+    return v;
+  }
+  // Con IA: actividades declaradas (grado > 0), en el orden del tipo
+  var acts = D.types[state.type].acts.map(function (a) { return a[0]; }).filter(function (a) { return state.acts[a] && state.acts[a][0] > 0; });
+  var missing = acts.filter(function (a) { return state.acts[a][0] >= 2 && state.acts[a][1] === null; });
+  var actPart = function (a) { var x = state.acts[a]; return a + x[0] + (x[0] >= 2 ? (x[1] === null ? "–" : x[1]) : 0); };
+  if (missing.length) {
+    v.title = "Falta un dato"; v.body = "Indica qué parte de la obra está afectada en «" + actName(state.type, missing[0]) + "».";
+    v.lines = [state.type + "-IG–" + evPart, acts.map(actPart).join("-")]; return v;
+  }
+  var r = finish({ type: state.type, ia: 1, ev: state.ev, keepIa1: false, declaredCat: null,
+    acts: acts.map(function (a) { return [a, state.acts[a][0], state.acts[a][0] >= 2 ? state.acts[a][1] : null]; }) }).r;
+  v.r = r;
+  v.lines = r.lines.slice();
+  if (state.ev === null) v.lines[0] = v.lines[0] + "-EV–";
+  v.complete = state.ev !== null;
+  if (r.ig.status !== "ok") {
+    v.title = "Se utilizó IA"; v.body = "Indica en qué actividades la usaste para estimar cuánto aportó a la obra.";
+    return v;
+  }
+  var lo = pct(r.ig.IG[0]), hi = pct(r.ig.IG[1]);
+  v.cat = r.cat; v.mid = (r.ig.IG[0] + r.ig.IG[1]) / 2; v.interval = r.ig.IG;
+  v.title = "Uso de IA " + LEVEL_WORD[r.cat];
+  v.body = "Se estima que la IA aportó " + (lo === hi ? "alrededor del" + NB + lo + NB + "%" : "entre el " + lo + NB + "% y el " + hi + NB + "%") + " de esta obra, según lo declarado.";
+  return v;
+}
+
+function wrap(text, max) {
+  var words = text.split(" "), lines = [], line = "";
+  words.forEach(function (w) {
+    if ((line + " " + w).trim().length > max) { lines.push(line); line = w; } else line = (line + " " + w).trim();
+  });
+  if (line) lines.push(line);
+  return lines;
+}
+
+/** La figura en SVG (la misma que se descarga). footer: añade el código y la versión al pie. */
+function figureSVG(v, footer, width) {
+  W = width || 720;
+  var narrow = W < 560;
+  X0 = narrow ? 14 : 40; X1 = W - X0;
+  var H = footer ? 336 : 300;
+  var s = [];
+  var desc = v.title + ". " + v.body + (v.ev ? " " + EV_TEXT + "." : "");
+  s.push('<svg xmlns="' + SVGNS + '" viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-labelledby="fig-title fig-desc" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif">');
+  s.push('<title id="fig-title">Declaración ORIDE' + (v.typeName ? " · " + esc(v.typeName) : "") + '</title>');
+  s.push('<desc id="fig-desc">' + esc(desc) + '</desc>');
+  if (footer) s.push('<rect width="' + W + '" height="' + H + '" fill="#ffffff"/>');
+  s.push('<text x="' + X0 + '" y="30" font-size="12" font-weight="600" letter-spacing="2" fill="#154849">DECLARACIÓN ORIDE</text>');
+  s.push('<text x="' + X0 + '" y="62" font-size="26" font-weight="700" fill="' + (v.typeName ? "#0a2b2c" : "#8a9798") + '">' + esc(v.typeName || "Tipo de obra") + '</text>');
+
+  // Escala: 0–100 %, seis tramos proporcionales
+  var barY = 206, barH = 34, keys = Object.keys(D.cats);
+  keys.forEach(function (k, i) {
+    var a = px(D.cats[k][0]), b = px(D.cats[k][1]), here = v.cat === k;
+    s.push('<rect x="' + a + '" y="' + barY + '" width="' + (b - a) + '" height="' + barH + '" fill="' + (here ? "#0e3b3c" : (i % 2 ? "#a9d2cd" : "#ffffff")) + '"/>');
+    if (D.catLabels[k].length * 6.6 + 6 <= b - a) s.push('<text x="' + (a + b) / 2 + '" y="' + (barY + 21) + '" font-size="11.5" text-anchor="middle" font-weight="' + (here ? 700 : 500) + '" fill="' + (here ? "#ffffff" : "#0a2b2c") + '">' + esc(D.catLabels[k]) + '</text>');
+  });
+  keys.forEach(function (k) { s.push('<line x1="' + px(D.cats[k][1]) + '" y1="' + barY + '" x2="' + px(D.cats[k][1]) + '" y2="' + (barY + barH) + '" stroke="#0e3b3c" stroke-width="1.5"/>'); });
+  s.push('<rect x="' + X0 + '" y="' + barY + '" width="' + (X1 - X0) + '" height="' + barH + '" fill="none" stroke="#0e3b3c" stroke-width="2"/>');
+  (narrow ? [0, 25, 50, 75, 100] : [0, 10, 25, 50, 75, 90, 100]).forEach(function (p) {
+    s.push('<line x1="' + px(p) + '" y1="' + (barY + barH) + '" x2="' + px(p) + '" y2="' + (barY + barH + 6) + '" stroke="#0e3b3c" stroke-width="1.5"/>');
+    s.push('<text x="' + px(p) + '" y="' + (barY + barH + 22) + '" font-size="12" text-anchor="' + (p === 100 && narrow ? "end" : "middle") + '" fill="#5b6b6c">' + p + (p === 100 ? NB + "%" : "") + '</text>');
+  });
+  if (v.interval) {
+    var a0 = px(v.interval[0]), b0 = px(v.interval[1]);
+    if (b0 - a0 < 3) { a0 -= 1.5; b0 += 1.5; }
+    s.push('<rect x="' + a0 + '" y="' + (barY - 7) + '" width="' + (b0 - a0) + '" height="5" rx="2" fill="#2ba39a"/>');
+  }
+
+  // Globo de diálogo, con el tick de evidencias junto al índice
+  var bw = Math.min(380, W - 24), body = wrap(v.body, Math.floor((bw - 32) / 7.4));
+  var bh = 34 + body.length * 20 + 10, by = barY - 22 - bh;
+  var tipX = v.mid === null ? null : px(v.mid);
+  var bx = Math.max(12, Math.min(W - 12 - bw, (tipX === null ? W / 2 : tipX) - bw / 2));
+  var tail = tipX === null ? "" : ' L ' + Math.min(Math.max(tipX + 9, bx + 18), bx + bw - 6) + ' ' + (by + bh) + ' L ' + tipX + ' ' + (barY - 9) + ' L ' + Math.max(Math.min(tipX - 9, bx + bw - 18), bx + 6) + ' ' + (by + bh);
+  var path = 'M ' + (bx + 10) + ' ' + by + ' H ' + (bx + bw - 10) + ' Q ' + (bx + bw) + ' ' + by + ' ' + (bx + bw) + ' ' + (by + 10)
+    + ' V ' + (by + bh - 10) + ' Q ' + (bx + bw) + ' ' + (by + bh) + ' ' + (bx + bw - 10) + ' ' + (by + bh) + tail
+    + ' H ' + (bx + 10) + ' Q ' + bx + ' ' + (by + bh) + ' ' + bx + ' ' + (by + bh - 10) + ' V ' + (by + 10) + ' Q ' + bx + ' ' + by + ' ' + (bx + 10) + ' ' + by + ' Z';
+  s.push('<path d="' + path + '" fill="#eef6f5" stroke="#0e3b3c" stroke-width="2" stroke-linejoin="round"/>');
+  s.push('<text x="' + (bx + 16) + '" y="' + (by + 26) + '" font-size="17" font-weight="700" fill="#0a2b2c">' + esc(v.title) + '</text>');
+  if (v.ev) {
+    var cx = Math.min(bx + 16 + v.title.length * 9.6 + 20, bx + bw - 16), cy = by + 20;
+    s.push('<g role="img" aria-label="' + EV_TEXT + '"><title>' + EV_TEXT + '</title><circle cx="' + cx + '" cy="' + cy + '" r="10" fill="#1f6b45"/><path d="M ' + (cx - 5) + ' ' + cy + ' l 3.5 3.5 l 6.5 -7" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>');
+  }
+  body.forEach(function (l, i) { s.push('<text x="' + (bx + 16) + '" y="' + (by + 50 + i * 20) + '" font-size="14.5" fill="#1c2526">' + esc(l) + '</text>'); });
+
+  if (footer) {
+    s.push('<line x1="' + X0 + '" y1="' + (H - 40) + '" x2="' + X1 + '" y2="' + (H - 40) + '" stroke="#e3e8e6"/>');
+    s.push('<text x="' + X0 + '" y="' + (H - 16) + '" font-size="12" fill="#5b6b6c">Código ORIDE <tspan font-family="ui-monospace, Menlo, Consolas, monospace" fill="#1c2526">' + esc(v.lines.join(" ")) + '</tspan>' + (v.ev ? '  ·  ✓ ' + EV_TEXT : '') + '</text>');
+  }
+  s.push('</svg>');
+  return s.join("");
+}
+
+function breakdownHTML(v) {
+  var r = v.r;
+  if (!r) return "<p>" + esc(v.body) + "</p>";
+  if (r.ia === 0) return "<p>Sin IA no se calcula índice ni categoría.</p>";
+  if (r.ig.status !== "ok") return "<p>" + esc(v.body) + "</p>";
+  var ig = r.ig, m = (ig.IG[0] + ig.IG[1]) / 2, h = "<ul>";
+  h += "<li>Intervalo estimado: <b>" + num(ig.IG[0], 2) + "–" + num(ig.IG[1], 2) + " %</b> · punto medio " + num(m, 2) + " % → tramo «" + esc(D.catLabels[r.cat]) + "»</li>";
+  h += "<li>Generación efectiva (G): " + num(ig.G[0], 1) + "–" + num(ig.G[1], 1) + (ig.q ? " · proporción generada con IA estimada por el alcance: " + num(ig.q[0] * 100, 0) + "–" + num(ig.q[1] * 100, 0) + " %" : "") + "</li>";
+  h += "<li>Influencia auxiliar (P): " + num(ig.P[0], 3) + "–" + num(ig.P[1], 3) + "</li>";
+  h += "<li>IG = G + (100 − G) · P</li>";
+  ig.rows.forEach(function (row) {
+    var parts = [row.role === "gen" ? "generativa (cuenta en G)" : "auxiliar, peso " + num(row.weight, 2), "factor " + num(row.factor, 2)];
+    if (row.scope !== null) parts.push("alcance " + num(row.S[0] * 100, 0) + "–" + num(row.S[1] * 100, 0) + " %");
+    if (row.contrib) parts.push("aporta " + num(row.contrib[0], 4) + "–" + num(row.contrib[1], 4) + " a P");
+    h += '<li><span class="mono">' + row.act + row.level + (row.scope === null ? 0 : row.scope) + "</span> " + esc(actName(r.type, row.act)) + ": " + esc(D.levels[row.level].toLowerCase()) + ". " + esc(parts.join(" · ")) + "</li>";
+  });
+  return h + "</ul>";
+}
+
+function drawFigure() {
+  var el = document.getElementById("figure");
+  el.innerHTML = figureSVG(view, false, Math.max(300, Math.min(720, Math.floor(el.clientWidth))));
+}
+
+function update() {
+  view = buildView();
+  drawFigure();
+  var text = "Declaración ORIDE" + (view.typeName ? ", " + view.typeName : "") + ". " + view.title + ". " + view.body + (view.ev ? " " + EV_TEXT + "." : "");
+  document.getElementById("figure-text").textContent = text;
+  document.getElementById("code-text").textContent = view.lines.join(" ");
+  document.getElementById("breakdown-body").innerHTML = breakdownHTML(view);
+  ["dl-png", "dl-svg", "copy-code"].forEach(function (id) { document.getElementById(id).disabled = !view.complete; });
+  document.getElementById("mini-text").textContent = view.title;
+}
+
+// ===== Formulario =====
+function scrollToEl(el) {
+  if (!el || el.hidden) return;
+  el.scrollIntoView({ block: "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+
+function buildTypes() {
+  var box = document.getElementById("types");
+  Object.keys(D.types).forEach(function (t) {
+    var d = document.createElement("div");
+    d.className = "opt";
+    d.innerHTML = '<input type="radio" name="type" id="type-' + t + '" value="' + t + '"><label for="type-' + t + '">' + esc(D.types[t].name) + '</label>';
+    box.appendChild(d);
+  });
+}
+
+function buildActs() {
+  var box = document.getElementById("acts");
+  box.innerHTML = "";
+  state.acts = {};
+  if (!state.type) return;
+  D.types[state.type].acts.forEach(function (a) {
+    var id = state.type + "-" + a[0];
+    var div = document.createElement("div");
+    div.className = "act";
+    div.id = "act-" + id;
+    var levels = D.levelsAuthor.map(function (txt, n) { return '<option value="' + n + '">' + esc(txt) + '</option>'; }).join("");
+    var scopes = '<option value="">Elige…</option>' + D.scopeLabels.map(function (txt, n) { return '<option value="' + n + '">' + esc(txt) + '</option>'; }).join("");
+    div.innerHTML = '<p class="act-name" id="name-' + id + '">' + esc(a[1]) + '</p><p class="act-desc">' + esc(a[2]) + '</p>'
+      + '<div class="selects">'
+      + '<div class="sel"><label for="lv-' + id + '">¿Cómo la utilizaste? <span class="sr-only">(' + esc(a[1]) + ')</span></label><select id="lv-' + id + '" data-act="' + a[0] + '" data-kind="level">' + levels + '</select></div>'
+      + '<div class="sel" id="scw-' + id + '" hidden><label for="sc-' + id + '">¿Qué parte de la obra está afectada? <span class="sr-only">(' + esc(a[1]) + ')</span></label><select id="sc-' + id + '" data-act="' + a[0] + '" data-kind="scope">' + scopes + '</select></div>'
+      + '</div>';
+    box.appendChild(div);
+  });
+}
+
+var form = document.getElementById("form");
+form.addEventListener("change", function (e) {
+  var t = e.target;
+  if (t.name === "type") {
+    state.type = t.value;
+    buildActs();
+    document.getElementById("q-ia").hidden = false;
+    if (state.ia !== null) document.getElementById("q-ev").hidden = false;
+    document.getElementById("q-acts").hidden = state.ia !== 1 || state.ev === null;
+    update();
+    scrollToEl(document.getElementById("q-ia"));
+  } else if (t.name === "ia") {
+    state.ia = +t.value;
+    var noAi = state.ia === 0;
+    document.getElementById("ev-legend").textContent = noAi
+      ? "¿Conservas evidencias que permitan documentar que no has usado IA?"
+      : "¿Conservas evidencias que permitan documentar los usos de IA que has declarado?";
+    document.getElementById("ev-hint").textContent = noAi
+      ? "Por ejemplo: versiones de trabajo, borradores, historiales o archivos originales que muestren tu proceso de creación."
+      : "Por ejemplo: qué herramientas usaste, historiales de interacción, prompts, respuestas de la IA o versiones de trabajo.";
+    document.getElementById("q-ev").hidden = false;
+    document.getElementById("q-acts").hidden = state.ia !== 1 || state.ev === null;
+    update();
+    scrollToEl(document.getElementById("q-ev"));
+  } else if (t.name === "ev") {
+    state.ev = +t.value;
+    var acts = document.getElementById("q-acts");
+    acts.hidden = state.ia !== 1;
+    update();
+    scrollToEl(state.ia === 1 ? acts : (window.matchMedia("(min-width: 960px)").matches ? null : document.getElementById("decl")));
+  } else if (t.dataset.kind) {
+    var act = t.dataset.act, id = state.type + "-" + act;
+    var cur = state.acts[act] || [0, null];
+    if (t.dataset.kind === "level") {
+      cur = [+t.value, +t.value >= 2 ? cur[1] : null];
+      var wrapSc = document.getElementById("scw-" + id);
+      wrapSc.hidden = +t.value < 2;
+      if (+t.value < 2) document.getElementById("sc-" + id).value = "";
+      document.getElementById("act-" + id).classList.toggle("used", +t.value > 0);
+    } else {
+      cur = [cur[0], t.value === "" ? null : +t.value];
+    }
+    state.acts[act] = cur;
+    var sc = document.getElementById("sc-" + id);
+    sc.classList.toggle("missing", cur[0] >= 2 && cur[1] === null);
+    if (cur[0] >= 2 && cur[1] === null) sc.setAttribute("aria-invalid", "true"); else sc.removeAttribute("aria-invalid");
+    update();
+  }
+});
+
+// Barra fija en móvil: solo mientras la caja no se ve
+if ("IntersectionObserver" in window) {
+  new IntersectionObserver(function (entries) { document.getElementById("mini").hidden = entries[0].isIntersecting; }).observe(document.getElementById("decl"));
+}
+
+// ===== Descargas y copia =====
+function download(name, blob) {
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+}
+function fileBase() { return "oride-" + view.lines.join("-").toLowerCase(); }
+document.getElementById("dl-svg").addEventListener("click", function () {
+  download(fileBase() + ".svg", new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n' + figureSVG(view, true, 720)], { type: "image/svg+xml" }));
+});
+document.getElementById("dl-png").addEventListener("click", function () {
+  var img = new Image(), scale = 2;
+  img.onload = function () {
+    var c = document.createElement("canvas");
+    c.width = img.width * scale; c.height = img.height * scale;
+    var ctx = c.getContext("2d");
+    ctx.scale(scale, scale);
+    ctx.drawImage(img, 0, 0);
+    c.toBlob(function (b) { download(fileBase() + ".png", b); }, "image/png");
+  };
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(figureSVG(view, true, 720));
+});
+document.getElementById("copy-code").addEventListener("click", function () {
+  var text = "ORIDE " + view.lines.join("\n");
+  var done = function () {
+    var btn = document.getElementById("copy-code");
+    btn.textContent = "Copiado";
+    document.getElementById("announce").textContent = "Código copiado";
+    setTimeout(function () { btn.textContent = "Copiar código"; }, 1600);
+  };
+  var fallback = function () {
+    var ta = document.createElement("textarea");
+    ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "absolute"; ta.style.left = "-9999px";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); done(); } catch (e) {}
+    ta.remove();
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+});
+
+var lastW = 0;
+window.addEventListener("resize", function () {
+  var w = document.getElementById("figure").clientWidth;
+  if (view && Math.abs(w - lastW) > 4) { lastW = w; drawFigure(); }
+});
+
+buildTypes();
+document.getElementById("v-alg").textContent = D.version;
+document.getElementById("v-cat").textContent = D.catVersion;
+document.getElementById("v-tax").textContent = D.taxonomy;
+update();
+</script>
+</body>
+</html>
