@@ -37,6 +37,16 @@ Rediseño del formulario y de la caja a partir de las pruebas `prototipos/prueba
 - **Móvil**: barra fija con el resultado y «Ver declaración».
 - «Trabajos académicos» pasa a «Trabajo académico».
 
+### v10.1 (diseño de la prueba v10)
+
+- **Caja**: medidor semicircular de 0 a 100 % en seis tramos con los colores «frío a cálido» (`DECL_COLORS`), el tramo de la obra marcado con un borde y la aguja en el punto medio. La cifra principal es el punto medio redondeado (el intervalo va en la explicación). Con evidencias: «Proceso creativo documentado disponible». En los requisitos, la aguja señala el máximo del tramo permitido («hasta el 25 %»).
+- **Fuera de la caja**: descargar PNG y SVG y el código con «Copiar código» y «Copiar enlace».
+- **Menú**: «Lee un código» en botón secundario y el cambio de idioma como enlace (terciario).
+- **¿Qué es ORIDE?**: primero el Índice Global, con una imagen de ejemplo; el código se presenta como una forma estructurada de declarar el uso de IA pensada para sistemas automatizados.
+- **Documentación**: primero «Cómo funciona el índice»; se quita la sección de trabajo académico.
+- **Sobre este sitio**: solo el código, en tamaño normal.
+- **oride.php**: explicación a la izquierda (con las actividades en una tabla: Actividad, Uso, Alcance) y la declaración a la derecha; el desglose del cálculo también lleva las actividades en tabla.
+
 ## Código ORIDE (v9, taxonomía ORIDE Code 3.1)
 
 Dos líneas. Ejemplo:

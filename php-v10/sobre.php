@@ -35,8 +35,7 @@ page_start(t('nav_about'), tr('Quién está detrás de ORIDE, cómo nació y có
 
   <h2><?= h(tr('El Código ORIDE de este sitio', 'This site’s ORIDE Code')) ?></h2>
   <p><?= h(tr('Como no podía ser de otra forma, este sitio también tiene su código:', 'Of course, this site has its own code too:')) ?></p>
-  <p class="formula code-example"><a class="mono" href="<?= u('oride.php?' . SITE_CODE) ?>">ORIDE <?= implode('<br>', array_map('h', $siteCode['lines'])) ?></a></p>
-  <?= code_box($siteCode, ['reader' => true]) ?>
+  <p class="site-code"><a href="<?= u('oride.php?' . SITE_CODE) ?>">ORIDE <?= implode(' ', array_map('h', $siteCode['lines'])) ?></a></p>
   <?= honor_note() ?>
   <p><a class="btn btn-secondary" href="<?= u('mejora.php') ?>"><?= h(t('nav_feedback')) ?></a></p>
 </div>

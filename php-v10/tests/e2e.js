@@ -50,7 +50,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   ok('baja sola a la pregunta de evidencias', Math.abs(await topOf(page, 'q-ev') - 16) < 40, String(await topOf(page, 'q-ev')));
   ok('pregunta de evidencias para obra sin IA', await page.isVisible('text=¿Conservas evidencias que permitan documentar que no has usado IA?'));
   await page.click('label[for=ev-si]');
-  ok('evidencias Sí → tick con el texto alternativo', await igHas('Se puede mostrar el proceso de creación') && (await page.locator('.fig-wide [data-ev-tick] title').first().textContent()) === 'Se puede mostrar el proceso de creación');
+  ok('evidencias Sí → «Proceso creativo documentado disponible» (sin tick)', await igHas('Proceso creativo documentado disponible') && (await page.locator('[data-figure] svg [data-ev]').count()) === 1);
   ok('código LI-IA0-EV1', (await waitCode('LI-IA0-EV1')) === 'LI-IA0-EV1');
   await page.click('label[for=ev-no]');
   await waitCode('LI-IA0-EV0');
@@ -100,6 +100,9 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   ok('oride.php reproduce el índice del formulario', (await ig()).includes(indexInForm), await ig());
   ok('oride.php muestra el código en dos líneas', (await page.locator('h1').innerText()).replace(/\s+/g, '|') === 'LI-IGB-EV1|DOC44-GEN24');
   ok('oride.php: desglose del cálculo debajo de la caja', await page.evaluate(() => { const b = document.querySelector('.decl-box').getBoundingClientRect(), d = document.querySelector('.breakdown').getBoundingClientRect(); return d.top > b.bottom; }) && (await page.locator('.breakdown').innerText()).includes('Punto medio: 20,55 %'));
+  ok('oride.php: explicación a la izquierda y declaración a la derecha', await page.evaluate(() => { const m = document.querySelector('.code-main').getBoundingClientRect(), d = document.querySelector('.code-aside').getBoundingClientRect(); return m.right <= d.left && Math.abs(m.top - d.top) < 40; }));
+  ok('oride.php: actividades en tabla (Actividad, Uso, Alcance) y desglose en tabla', JSON.stringify(await page.locator('.code-main .acts-table thead th').allInnerTexts()) === '["Actividad","Uso","Alcance"]' && (await page.locator('.breakdown .acts-table tbody tr').count()) === 2);
+  ok('descargas y copiar fuera de la caja', (await page.locator('.decl-box [data-download], .decl-box [data-copy-code]').count()) === 0 && (await page.locator('.decl > .decl-actions [data-download]').count()) === 2);
   ok('oride.php: en el menú, «Lee un código» activo', (await page.locator('header [aria-current="page"]').innerText()) === 'Lee un código');
   await page.screenshot({ path: out + '/02-oride.png', fullPage: true });
   await page.goto(B + 'oride.php?LIT-IA1-DOC44-GEN24-V1');
@@ -112,7 +115,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   // Lee un código
   await page.goto(B);
   const actions = await page.locator('.menu-actions a').allInnerTexts();
-  ok('menú: «Lee un código» junto a «Crea tu declaración», con el mismo estilo', JSON.stringify(actions) === '["Crea tu declaración","Lee un código"]' && await page.evaluate(() => { const a = document.querySelectorAll('.menu-actions a'); return a[0].className === a[1].className; }));
+  ok('menú: «Lee un código» junto a «Crea tu declaración», en secundario; idioma en terciario', JSON.stringify(actions) === '["Crea tu declaración","Lee un código"]' && await page.evaluate(() => { const a = document.querySelectorAll('.menu-actions a'); const l = getComputedStyle(document.querySelector('.lang-switch')); return a[0].classList.contains('btn-primary') && a[1].classList.contains('btn-secondary') && l.borderTopColor === 'rgba(0, 0, 0, 0)' && l.textDecorationLine === 'underline'; }));
   await page.click('.menu-actions >> text=Lee un código');
   ok('«Lee un código»: página con el campo del código', page.url().includes('leer.php') && await page.isVisible('#c'));
   await page.fill('#c', 'ph-iga-ev1\nrev44-ret32');
@@ -158,7 +161,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.goto(B + 'comprobar.php?r=ACA-IGA-EV1-DOC54-ARG10-GEN21-FOR54&d=ACA-IGA-EV1-DOC21-IDE22-ARG33-REV22&mode=digits');
   ok('ACA: el verificador aplica el límite de ARG aunque la categoría cumpla', (await page.locator('#vf-verdict').innerText()).includes('Declaración No Compatible') && (await page.locator('.vf-row-fail th').innerText()).includes('ARG'));
   await page.goto(B + 'documentacion.php#academicos');
-  ok('Documentación: sección de trabajo académico con tres ejemplos y el requisito', (await page.locator('#academicos .example-card').count()) === 3 && (await page.locator('#academicos').innerText()).includes('ACA-IGA-EV1'));
+  ok('Documentación: primero el índice, después el código y sin la sección de trabajo académico', (await page.locator('#academicos').count()) === 0 && await page.evaluate(() => document.querySelector('#indice').compareDocumentPosition(document.querySelector('#codigo')) & Node.DOCUMENT_POSITION_FOLLOWING));
 
   // Descarga del cálculo
   const rec = await (await page.request.get(B + 'calc.php?code=LI-IGB-EV1-DOC44-GEN24&format=json')).json();
@@ -196,7 +199,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.click('label[for=s_SC_RED-1]');
   ok('instituciones: código de referencia en dos líneas', (await waitCode('SC-IGA-EV1RED31')) === 'SC-IGA-EV1RED31');
   ok('instituciones: caja «Requisito ORIDE» con el uso máximo de IA', (await page.locator('#decl-title').textContent()) === 'Requisito ORIDE' && await igHas('Uso máximo de IA: muy bajo'));
-  ok('instituciones: botón «Verificar una entrega» en la caja', await page.isVisible('.decl-box [data-verify]'));
+  ok('instituciones: botón «Verificar una entrega» bajo la caja', await page.isVisible('.decl [data-verify]'));
   ok('la pestaña «Verificar una entrega» lleva el código del requisito', /comprobar\.php\?r=SC-IGA-EV1-RED31/.test(await page.getAttribute('[data-verify-tab]', 'href')));
   await page.click('[data-verify-tab]');
   ok('al pulsar la pestaña, el primer campo se rellena con el código', page.url().includes('comprobar.php') && (await page.inputValue('#r')) === 'SC-IGA-EV1-RED31');
@@ -281,7 +284,7 @@ const copied = async (p, sel) => { try { await p.waitForFunction(s => /Copiado|C
   await page.goto(B + 'sobre.php');
   const about = await page.locator('main').innerText();
   ok('Sobre este sitio en primera persona', about.includes('Hola, soy Olga Revilla Muñoz') && !about.includes('La autora de este sitio'));
-  ok('código de este sitio', about.includes('ORIDE SW-IGE-EV1\nREQ21-ARQ44-COD44-REF33-PRU54-DOC34'));
+  ok('Sobre este sitio: solo el código, sin la caja', about.includes('ORIDE SW-IGE-EV1 REQ21-ARQ44-COD44-REF33-PRU54-DOC34') && (await page.locator('main .decl-box').count()) === 0);
   await page.goto(B);
   ok('inicio: ejemplo sin botones y botón «Qué es una declaración ORIDE»', (await page.locator('.decl-box [data-copy-code]').count()) === 0 && (await page.getAttribute('a:has-text("Qué es una declaración ORIDE")', 'href')).includes('que-es.php'));
 

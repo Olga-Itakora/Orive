@@ -175,19 +175,19 @@ $view = fn(array $in, bool $inst = false) => decl_view($r = oride_compute($in), 
 check('vacía: invita a empezar por el tipo de obra', $view([])['title'] === 'Empieza por el tipo de obra' && $view([])['lines'] === ['TIPO–IA–EV–']);
 check('sin respuesta de IA: pregunta si se usó', $view(['type' => 'LI'])['title'] === '¿Usaste IA?');
 check('IA = No → «Obra 100 % libre de IA», el globo apunta al 0', ($v = $view(['type' => 'LI', 'ia' => 'no', 'ev' => 'no']))['title'] === "Obra 100\u{a0}% libre de IA" && $v['mid'] === 0.0 && $v['cat'] === null);
-check('evidencias Sí → tick con el texto «Se puede mostrar el proceso de creación»', ($v = $view(['type' => 'LI', 'ia' => 'no', 'ev' => 'si']))['ev'] && str_contains(decl_svg($v), '<g data-ev-tick><title>Se puede mostrar el proceso de creación</title>') && !str_contains(decl_svg($view(['type' => 'LI', 'ia' => 'no', 'ev' => 'no'])), 'data-ev-tick'));
+check('evidencias Sí → «Proceso creativo documentado disponible» (sin tick)', ($v = $view(['type' => 'LI', 'ia' => 'no', 'ev' => 'si']))['ev'] && str_contains(decl_svg($v), '>Proceso creativo documentado disponible</text>') && !str_contains(decl_svg($view(['type' => 'LI', 'ia' => 'no', 'ev' => 'no'])), 'data-ev'));
 $v = $view($lit(['DOC', 'GEN'], ['DOC' => '4', 'GEN' => '2'], ['DOC' => '4', 'GEN' => '4'], 'si'));
 check('con índice: «Uso de IA bajo» y el porcentaje explicado con palabras (sin letras)', $v['title'] === 'Uso de IA bajo' && $v['body'] === "Se estima que la IA aportó entre el 18\u{a0}% y el 23\u{a0}% de esta obra, según lo declarado." && !preg_match('/\bIG[A-F]\b|\b[A-F] —/', $v['title'] . $v['body']));
 check('el globo apunta al punto medio y se marca el intervalo', abs($v['mid'] - 20.555) < 0.01 && $v['interval'] === ig_from_result(oride_compute($lit(['DOC', 'GEN'], ['DOC' => '4', 'GEN' => '2'], ['DOC' => '4', 'GEN' => '4'], 'si')))['IG']);
 $svg = decl_svg($v);
-check('figura: tipo de obra, seis tramos de 0 a 100 % y el tramo de la obra resaltado', str_contains($svg, '>Literatura</text>') && substr_count($svg, '<rect x=') >= 7 && str_contains($svg, 'fill="#0e3b3c"/><text') && str_contains($svg, ">100\u{a0}%</text>"));
-check('figura accesible: role="img" con el texto completo', str_contains($svg, 'role="img" aria-label="Declaración ORIDE · Literatura. Uso de IA bajo.'));
-check('figura estrecha para cajas pequeñas y versión para descargar con el código al pie', str_contains($f = decl_figure($v), 'fig-narrow') && str_contains($f, '<template data-export>') && str_contains(decl_svg($v, 720, true), 'LI-IGB-EV1 DOC44-GEN24'));
+check('figura: medidor «frío a cálido» de 0 a 100 % en seis tramos, el de la obra con borde, sin el arco del intervalo', str_contains($svg, '>Literatura</text>') && substr_count($svg, 'stroke-width="28"') === 6 && str_contains($svg, 'stroke="#2d2a26" stroke-width="3.5"') && str_contains($svg, ">100\u{a0}%</text>") && !str_contains($svg, 'stroke-width="5"'));
+check('figura accesible y cifra principal = punto medio', str_contains($svg, 'role="img" aria-label="Declaración ORIDE · Literatura. 21' . "\u{a0}" . '%. Uso de IA bajo.') && $v['amount'] === "21\u{a0}%");
+check('versión para descargar con el código al pie', str_contains($f = decl_figure($v), '<template data-export>') && str_contains(decl_svg($v, true), 'LI-IGB-EV1 DOC44-GEN24'));
 check('falta el alcance: «Falta un dato» y el código con hueco', ($v = $view(['type' => 'LI', 'ia' => 'si', 'ev' => 'si', 'acts' => ['GEN'], 'u' => ['GEN' => '3']]))['title'] === 'Falta un dato' && $v['lines'] === ['LI-IG–-EV1', 'GEN3–']);
 check('IA sin actividades: «Se utilizó IA», sin punto en la escala', ($v = $view($lit([], [], [], 'si')))['title'] === 'Se utilizó IA' && $v['mid'] === null);
 check('requisito: «Uso máximo de IA: bajo»', ($v = $view($lit(['GEN'], ['GEN' => '2'], ['GEN' => '4'], 'si'), true))['title'] === 'Uso máximo de IA: bajo' && $v['head'] === 'Requisito ORIDE');
 $box = code_box(oride_compute($lit(['GEN'], ['GEN' => '2'], ['GEN' => '4'], 'si')));
-check('caja: descargar PNG y SVG, copiar código y copiar enlace; sin desglose', str_contains($box, 'data-download="png"') && str_contains($box, 'data-download="svg"') && str_contains($box, 'data-copy-code="ORIDE LI-IGB-EV1' . "\n" . 'GEN24"') && str_contains($box, 'data-copy-link="') && !str_contains($box, 'Desglose'));
+check('descargas y copiar, fuera de la caja (que solo tiene la figura); sin desglose', !preg_match('/<section class="decl-box".*data-download.*<\/section>/s', $box) && str_contains($box, 'data-download="png"') && str_contains($box, 'data-download="svg"') && str_contains($box, 'data-copy-code="ORIDE LI-IGB-EV1' . "\n" . 'GEN24"') && str_contains($box, 'data-copy-link="') && !str_contains($box, 'Desglose'));
 check('caja: el código en letra pequeña debajo', str_contains($box, '<code data-code>LI-IGB-EV1 GEN24</code>'));
 check('caja incompleta: botones desactivados', substr_count(code_box(oride_compute(['type' => 'LI'])), ' disabled') === 4);
 $bd = ig_breakdown(ig_from_result($r = oride_compute($lit(['DOC', 'GEN'], ['DOC' => '4', 'GEN' => '2'], ['DOC' => '4', 'GEN' => '4'], 'si'))), $r);
@@ -209,7 +209,7 @@ check('opciones sin radio visible (botones) y «Trabajo académico»', str_conta
 check('cada actividad: desplegable con «No utilicé IA» por defecto', str_contains($f, '<select id="lv-LI-DOC" name="u_LI_DOC"><option value="0" selected>No utilicé IA</option>'));
 check('el alcance solo aparece con los grados 2 a 5, en pastillas cortas', str_contains($f, 'data-when="u_LI_GEN=2,3,4,5"><legend>') && str_contains($f, '>5% – 25%</label>') && str_contains($f, '>Menos del 5%</label>'));
 check('la visibilidad se decide con las respuestas del formulario', !str_contains(substr($f, strpos($f, 'data-when="u_LI_GEN=2,3,4,5"'), 40), 'hidden') && str_contains(substr($f, strpos($f, 'data-when="u_LI_DOC=2,3,4,5"'), 40), 'hidden'));
-check('pregunta de evidencias según la respuesta de IA', str_contains($f, 'que permitan documentar los usos de IA que has declarado') && str_contains($f, 'que permitan documentar que no has usado IA'));
+check('pregunta de evidencias según la respuesta de IA', str_contains($f, 'que permitan documentar el proceso creativo') && str_contains($f, 'que permitan documentar que no has usado IA'));
 
 echo "Verificador ORIDE-VERIFY-1.2\n";
 // Código en el formato actual a partir de uno con IA1 (para escribir las pruebas con actividades).

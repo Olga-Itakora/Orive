@@ -92,7 +92,7 @@
   document.addEventListener("click", function (e) {
     var btn = e.target.closest && e.target.closest("[data-download]");
     if (!btn || btn.disabled) return;
-    var box = btn.closest(".decl-box"), tpl = box && $("template[data-export]", box);
+    var box = btn.closest(".decl"), tpl = box && $("template[data-export]", box);
     if (!tpl) return;
     // Al leer el HTML, el navegador escribe los espacios duros como &nbsp;, que no es válido en SVG (XML).
     var svg = tpl.innerHTML.trim().replace(/&nbsp;/g, "&#160;");

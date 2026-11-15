@@ -71,7 +71,7 @@ function builder_form(string $mode, array $in, string $action): string
     if ($inst) {
         $html .= h(tr('¿Exiges que el autor conserve evidencias de su proceso?', 'Do you require the author to keep evidence of their process?'));
     } else {
-        $html .= '<span' . when('ia=si') . '>' . h(tr('¿Conservas evidencias que permitan documentar los usos de IA que has declarado?', 'Do you keep evidence that documents the AI uses you have declared?')) . '</span>'
+        $html .= '<span' . when('ia=si') . '>' . h(tr('¿Conservas evidencias que permitan documentar el proceso creativo?', 'Do you keep evidence that documents the creative process?')) . '</span>'
             . '<span' . when('ia=no') . '>' . h(tr('¿Conservas evidencias que permitan documentar que no has usado IA?', 'Do you keep evidence that documents that you did not use AI?')) . '</span>';
     }
     $html .= '</legend>';

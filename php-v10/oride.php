@@ -38,35 +38,45 @@ function plain_explanation(array $r): array
         return $out;
     }
     $out[] = tr("Obra de tipo «{$type}» en la que se utilizó inteligencia artificial.", "A work of type “{$type}” in which artificial intelligence was used.");
-    if ($r['ev'] === 1) $out[] = tr('El autor conserva evidencias de estos usos y puede mostrarlas si se le piden.', 'The author keeps evidence of these uses and can show it on request.');
-    if ($r['ev'] === 0) $out[] = tr('El autor no conserva evidencias de estos usos.', 'The author does not keep evidence of these uses.');
+    if ($r['ev'] === 1) $out[] = tr('El autor conserva evidencias del proceso creativo y puede mostrarlas si se le piden.', 'The author keeps evidence of the creative process and can show it on request.');
+    if ($r['ev'] === 0) $out[] = tr('El autor no conserva evidencias del proceso creativo.', 'The author does not keep evidence of the creative process.');
     if ($r['cat'] !== null) {
         $v = decl_view($r, ig_from_result($r), false, true);
         $out[] = $v['title'] . '. ' . ($r['cat_source'] === 'declared' ? t('ig_cat_declared') : $v['body']) . ($r['cat_source'] === 'derived' ? ' ' . t('ig_cat_derived') : '');
     }
     if ($r['all_zero']) $out[] = t('all_zero_reader');
     if (!$r['acts']) $out[] = tr('El autor no detalla en qué actividades.', 'The author does not detail in which activities.');
-    foreach ($r['acts'] as [$act, $level, $scope]) {
-        $name = acts($r['type'])[$act][0];
-        $line = "«{$name}»: " . mb_strtolower(LEVELS_READER[lang()][$level]);
-        if ($scope !== null) $line .= ' (' . mb_strtolower(t('scope_line', mb_strtolower(scope_labels()[$scope]))) . ')';
-        $out[] = (en() ? str_replace(['«', '»'], ['“', '”'], $line) : $line) . '.';
-    }
     return $out;
+}
+
+/** Actividades declaradas en una tabla: Actividad, Uso y Alcance. */
+function acts_table(array $r): string
+{
+    if (!$r['acts']) return '';
+    $html = '<table class="acts-table"><caption>' . h(tr('Actividades declaradas', 'Declared activities')) . '</caption><thead><tr><th scope="col">' . h(tr('Actividad', 'Activity')) . '</th><th scope="col">' . h(tr('Uso', 'Use')) . '</th><th scope="col">' . h(tr('Alcance', 'Scope')) . '</th></tr></thead><tbody>';
+    foreach ($r['acts'] as [$act, $level, $scope]) {
+        $html .= '<tr><th scope="row"><span class="mono">' . h(act_part($act, $level, $scope)) . '</span> ' . h(acts($r['type'])[$act][0]) . '</th><td>' . h(LEVELS_READER[lang()][$level]) . '</td><td>' . h($scope === null ? '—' : scope_labels()[$scope]) . '</td></tr>';
+    }
+    return $html . '</tbody></table>';
 }
 
 page_start($title, $r ? implode(' ', plain_explanation($r)) : tr('Qué significa un Código ORIDE.', 'What an ORIDE Code means.'));
 ?>
-<div class="container narrow-text page">
+<div class="container page">
   <?php if ($r): ?>
-    <p class="eyebrow"><?= h(t('code_label')) ?></p>
-    <h1 class="mono code-title"><?= implode('<br>', array_map('h', $r['lines'])) ?></h1>
-    <?php if ($e['code'] !== $r['code']): ?><p class="muted small"><?= h(tr('Escrito como', 'Written as')) ?> <span class="mono"><?= h($raw) ?></span>.</p><?php endif; ?>
-    <ul class="plain-list">
-      <?php foreach (plain_explanation($r) as $line) echo '<li>' . h($line) . '</li>'; ?>
-    </ul>
-    <?= code_box($r, ['reader' => true, 'extra' => $extra]) ?>
-    <?= honor_note() ?>
+    <div class="code-page">
+      <div class="code-main">
+        <p class="eyebrow"><?= h(t('code_label')) ?></p>
+        <h1 class="mono code-title"><?= implode('<br>', array_map('h', $r['lines'])) ?></h1>
+        <?php if ($e['code'] !== $r['code']): ?><p class="muted small"><?= h(tr('Escrito como', 'Written as')) ?> <span class="mono"><?= h($raw) ?></span>.</p><?php endif; ?>
+        <ul class="plain-list">
+          <?php foreach (plain_explanation($r) as $line) echo '<li>' . h($line) . '</li>'; ?>
+        </ul>
+        <?= acts_table($r) ?>
+        <?= honor_note() ?>
+      </div>
+      <div class="code-aside"><?= code_box($r, ['reader' => true, 'extra' => $extra]) ?></div>
+    </div>
     <section class="breakdown spaced" aria-labelledby="breakdown-title">
       <h2 id="breakdown-title"><?= h(t('ig_breakdown')) ?></h2>
       <?= ig_breakdown(ig_from_result($r, $extra), $r, $extra) ?>

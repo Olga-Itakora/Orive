@@ -39,11 +39,23 @@ page_start(t('nav_docs'), tr('Cómo funcionan el Código ORIDE y el Índice Glob
 <div class="container narrow-text page docs">
   <h1><?= h(t('nav_docs')) ?></h1>
   <nav class="toc" aria-label="<?= h(tr('En esta página', 'On this page')) ?>">
-    <a href="#codigo"><?= h(tr('Cómo funciona el código', 'How the code works')) ?></a>
-    <a href="#academicos"><?= h(tr('Trabajo académico', 'Academic work')) ?></a>
     <a href="#indice"><?= h(tr('Cómo funciona el índice', 'How the index works')) ?></a>
+    <a href="#codigo"><?= h(tr('Cómo funciona el código', 'How the code works')) ?></a>
     <a href="#preguntas"><?= h(t('nav_faq')) ?></a>
   </nav>
+
+  <section id="indice">
+    <h2><?= h(tr('Cómo funciona el Índice Global ORIDE', 'How the ORIDE Global Index works')) ?></h2>
+    <p><?= h(tr('Junto al código se calcula una estimación experimental de 0 a 100 de la contribución de la IA a la obra (la metodología está abierta a revisión y no se ha validado científicamente):', 'Alongside the code, an experimental estimate from 0 to 100 of the contribution of AI to the work is calculated (the methodology is open to review and has not been scientifically validated):')) ?></p>
+    <p class="formula">IG = G + (100 − G) · P</p>
+    <ul>
+      <li><?= tr('<b>G</b>, generación efectiva: cuánto contenido generado con IA queda en la obra final, según la parte de la obra afectada y lo que el autor transformó.', '<b>G</b>, effective generation: how much AI-generated content remains in the final work, based on the share of the work affected and what the author transformed.') ?></li>
+      <li><?= tr('<b>P</b>, influencia auxiliar: el uso de IA en documentación, ideas, estructura o revisión, con pesos pequeños.', '<b>P</b>, auxiliary influence: the use of AI for research, ideas, structure or review, with small weights.') ?></li>
+      <li><?= h(tr('Si los datos son tramos (por ejemplo, «del 50% al 75%»), el índice se calcula como intervalo y se clasifica en una categoría de A a F por su punto medio: A, hasta el 10 %; B, hasta el 25 %; C, hasta el 50 %; D, hasta el 75 %; E, hasta el 90 %; F, más del 90 %. La categoría va en el código (IGB).', 'If the data are bands (for example, “from 50% to 75%”), the index is calculated as a range and classified into a category from A to F by its midpoint: A, up to 10%; B, up to 25%; C, up to 50%; D, up to 75%; E, up to 90%; F, over 90%. The category goes in the code (IGB).')) ?></li>
+      <li><?= h(tr('Sin IA no hay índice ni categoría (IA0, que no equivale a IGA). Con IA pero sin actividades detalladas, no se calcula (IA1).', 'Without AI there is no index or category (IA0, which is not the same as IGA). With AI but no activities given, it is not calculated (IA1).')) ?></li>
+    </ul>
+    <p><?= tr('Los factores, los pesos y las limitaciones están en <a href="' . h(u('indice.php')) . '">Cómo se calcula el Índice Global ORIDE</a>.', 'The factors, weights and limitations are in <a href="' . h(u('indice.php')) . '">How the ORIDE Global Index is calculated</a>.') ?></p>
+  </section>
 
   <section id="codigo">
     <h2><?= h(tr('Cómo funciona el Código ORIDE', 'How the ORIDE Code works')) ?></h2>
@@ -67,46 +79,6 @@ page_start(t('nav_docs'), tr('Cómo funcionan el Código ORIDE y el Índice Glob
     </div>
     <p class="muted"><?= tr('Con los grados 0 y 1 la segunda cifra es 0 (<span class="mono">DOC10</span>). Si se usó IA pero todas las actividades están a 0, hay que explicar el uso de la IA fuera de las actividades establecidas.', 'With degrees 0 and 1 the second digit is 0 (<span class="mono">DOC10</span>). If AI was used but every activity is at 0, the use of AI must be explained outside the listed activities.') ?></p>
     <p><?= tr('Las actividades de cada tipo de obra están en <a href="' . h(u('codigo.php')) . '">Código ORIDE</a>.<br>Cada código tiene su propia página, por ejemplo <a class="mono" href="' . h(u('oride.php?LI-IGB-EV1-DOC44-GEN24')) . '">oride.php?LI-IGB-EV1-DOC44-GEN24</a>.', 'The activities for each type of work are listed in <a href="' . h(u('codigo.php')) . '">ORIDE Code</a>.<br>Each code has its own page, for example <a class="mono" href="' . h(u('oride.php?LI-IGB-EV1-DOC44-GEN24')) . '">oride.php?LI-IGB-EV1-DOC44-GEN24</a>.') ?></p>
-  </section>
-
-  <section id="academicos">
-    <h2><?= h(tr('Trabajo académico', 'Academic work')) ?></h2>
-    <p><?= h(type_desc('ACA')) ?></p>
-    <p><?= tr('<b>Trabajo académico</b> (<span class="mono">ACA</span>) e <b>Investigación científica</b> (<span class="mono">SC</span>) comparten algunas actividades, pero se eligen por separado: la investigación se orienta a producir y comunicar conocimiento científico; los trabajos académicos, a aprender y a demostrar conocimientos, competencias o resultados de aprendizaje. Los TFG, TFM u otros trabajos ya declarados con otro tipo de obra no cambian.', '<b>Academic work</b> (<span class="mono">ACA</span>) and <b>Scientific research</b> (<span class="mono">SC</span>) share some activities but are chosen separately: research aims to produce and communicate scientific knowledge; academic work aims at learning and at demonstrating knowledge, competencies or learning outcomes. Theses and other works already declared under another type of work do not change.') ?></p>
-    <p><?= h(tr('ORIDE distingue para qué se usó la IA (documentarse, analizar, razonar, redactar, revisar…), pero no decide qué usos son aceptables: eso corresponde a cada docente o institución, que puede fijar sus propios límites por actividad.', 'ORIDE distinguishes what AI was used for (research, analysis, reasoning, writing, review…), but does not decide which uses are acceptable: that is up to each teacher or institution, which can set its own limits for each activity.')) ?></p>
-    <h3><?= h(tr('Ejemplos', 'Examples')) ?></h3>
-    <?php foreach ([
-        [tr('Ensayo con IA para documentarse y corregir la gramática', 'Essay using AI for research and grammar'), tr('Un estudiante consulta información con IA y la usa como referencia, y mejora la gramática del ensayo que ha redactado por su cuenta.', 'A student looks up information with AI and uses it as a reference, and improves the grammar of an essay they wrote themselves.'), ['DOC' => [2, 1], 'FOR' => [4, 3]]],
-        [tr('Trabajo con IA para desarrollar argumentos', 'Work using AI to develop arguments'), tr('Una estudiante usa la IA para proponer explicaciones, contrastar argumentos y mejorar el razonamiento de su trabajo.', 'A student uses AI to suggest explanations, test arguments and improve the reasoning of her work.'), ['DOC' => [2, 1], 'IDE' => [2, 2], 'ARG' => [3, 3], 'REV' => [2, 2]]],
-        [tr('Informe con párrafos generados con IA', 'Report with AI-generated paragraphs'), tr('Una persona incorpora en un informe académico párrafos generados con IA, transformados sustancialmente, en la mitad o tres cuartas partes del texto.', 'A person includes AI-generated paragraphs in an academic report, substantially transformed, in half to three quarters of the text.'), ['DOC' => [2, 1], 'GEN' => [3, 2], 'FOR' => [3, 2]]],
-    ] as [$title, $text, $acts]):
-        $ex = oride_compute(['type' => 'ACA', 'ia' => 'si', 'ev' => 'si', 'acts' => array_keys($acts), 'u' => array_map(fn($x) => (string) $x[0], $acts), 's' => array_map(fn($x) => (string) $x[1], $acts)]); ?>
-      <div class="card example-card">
-        <h4><?= h($title) ?></h4>
-        <p class="muted"><?= h($text) ?></p>
-        <p class="formula code-example"><a class="mono" href="<?= h(u('oride.php?' . $ex['code'])) ?>"><?= implode('<br>', array_map('h', $ex['lines'])) ?></a></p>
-        <p class="small"><?= h(t('ig_title') . ': ' . ig_cat_label($ex['cat'])) ?> · <?= h(tr('categoría calculada', 'calculated category')) ?></p>
-      </div>
-    <?php endforeach; ?>
-    <?php $req = oride_compute(['type' => 'ACA', 'ia' => 'si', 'ev' => 'si', 'acts' => ['DOC', 'ARG', 'GEN', 'FOR'], 'u' => ['DOC' => '5', 'ARG' => '1', 'GEN' => '2', 'FOR' => '5'], 's' => ['DOC' => '4', 'GEN' => '1', 'FOR' => '4']]);
-          $decl = oride_compute(['type' => 'ACA', 'ia' => 'si', 'ev' => 'si', 'acts' => ['DOC', 'IDE', 'ARG', 'REV'], 'u' => ['DOC' => '2', 'IDE' => '2', 'ARG' => '3', 'REV' => '2'], 's' => ['DOC' => '1', 'IDE' => '2', 'ARG' => '3', 'REV' => '2']]); ?>
-    <h3><?= h(tr('Un requisito de una universidad', 'A university requirement')) ?></h3>
-    <p><?= h(tr('Por ejemplo, una universidad permite usar IA para documentarse y para la revisión formal, limita la generación de contenido y no permite incorporar razonamientos ni argumentos elaborados con IA (solo consultarlos):', 'For example, a university allows AI for research and formal review, limits content generation and does not allow incorporating AI-built reasoning or arguments (only consulting them):')) ?></p>
-    <p class="formula code-example mono"><?= implode('<br>', array_map('h', $req['lines'])) ?></p>
-    <p><?= tr('El segundo ejemplo tiene la misma categoría, pero no cumple el límite de <span class="mono">ARG</span>. Por eso la compatibilidad no se decide solo con el índice global: <a href="' . h(u('comprobar.php?' . http_build_query(['r' => $req['code'], 'd' => $decl['code'], 'mode' => 'digits']))) . '">compruébalo en el verificador</a>.', 'The second example has the same category but does not meet the <span class="mono">ARG</span> limit. That is why compatibility is not decided by the global index alone: <a href="' . h(u('comprobar.php?' . http_build_query(['r' => $req['code'], 'd' => $decl['code'], 'mode' => 'digits']))) . '">check it in the verifier</a>.') ?></p>
-  </section>
-
-  <section id="indice">
-    <h2><?= h(tr('Cómo funciona el Índice Global ORIDE', 'How the ORIDE Global Index works')) ?></h2>
-    <p><?= h(tr('Junto al código se calcula una estimación experimental de 0 a 100 de la contribución de la IA a la obra (la metodología está abierta a revisión y no se ha validado científicamente):', 'Alongside the code, an experimental estimate from 0 to 100 of the contribution of AI to the work is calculated (the methodology is open to review and has not been scientifically validated):')) ?></p>
-    <p class="formula">IG = G + (100 − G) · P</p>
-    <ul>
-      <li><?= tr('<b>G</b>, generación efectiva: cuánto contenido generado con IA queda en la obra final, según la parte de la obra afectada y lo que el autor transformó.', '<b>G</b>, effective generation: how much AI-generated content remains in the final work, based on the share of the work affected and what the author transformed.') ?></li>
-      <li><?= tr('<b>P</b>, influencia auxiliar: el uso de IA en documentación, ideas, estructura o revisión, con pesos pequeños.', '<b>P</b>, auxiliary influence: the use of AI for research, ideas, structure or review, with small weights.') ?></li>
-      <li><?= h(tr('Si los datos son tramos (por ejemplo, «del 50% al 75%»), el índice se calcula como intervalo y se clasifica en una categoría de A a F por su punto medio: A, hasta el 10 %; B, hasta el 25 %; C, hasta el 50 %; D, hasta el 75 %; E, hasta el 90 %; F, más del 90 %. La categoría va en el código (IGB).', 'If the data are bands (for example, “from 50% to 75%”), the index is calculated as a range and classified into a category from A to F by its midpoint: A, up to 10%; B, up to 25%; C, up to 50%; D, up to 75%; E, up to 90%; F, over 90%. The category goes in the code (IGB).')) ?></li>
-      <li><?= h(tr('Sin IA no hay índice ni categoría (IA0, que no equivale a IGA). Con IA pero sin actividades detalladas, no se calcula (IA1).', 'Without AI there is no index or category (IA0, which is not the same as IGA). With AI but no activities given, it is not calculated (IA1).')) ?></li>
-    </ul>
-    <p><?= tr('Los factores, los pesos y las limitaciones están en <a href="' . h(u('indice.php')) . '">Cómo se calcula el Índice Global ORIDE</a>.', 'The factors, weights and limitations are in <a href="' . h(u('indice.php')) . '">How the ORIDE Global Index is calculated</a>.') ?></p>
   </section>
 
   <section id="preguntas">

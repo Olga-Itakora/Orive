@@ -10,7 +10,7 @@ require_once __DIR__ . '/i18n.php';
 require_once __DIR__ . '/indice.php';
 require_once __DIR__ . '/categories.php';
 require_once __DIR__ . '/compare.php';
-const ORIDE_VERSION = '10.0.0';
+const ORIDE_VERSION = '10.1.0';
 
 // ---------------------------------------------------------------------------
 // Configuración
@@ -443,7 +443,7 @@ function page_start(string $title, ?string $description = null): void
     echo '<nav id="site-nav" class="site-nav" aria-label="' . h(t('nav_main')) . '"><ul>';
     foreach ($nav as $href => $label) echo '<li><a href="' . u($href) . '"' . ($section === $href ? ' aria-current="page"' : '') . '>' . h($label) . '</a></li>';
     echo '</ul><div class="menu-actions"><a class="btn btn-primary" href="' . u('crear.php') . '"' . ($current === 'crear.php' ? ' aria-current="page"' : '') . '>' . h(t('nav_create')) . '</a>'
-        . '<a class="btn btn-primary" href="' . u('leer.php') . '"' . (in_array($current, ['leer.php', 'oride.php'], true) ? ' aria-current="page"' : '') . '>' . h(t('nav_read')) . '</a></div></nav></div></header>';
+        . '<a class="btn btn-secondary" href="' . u('leer.php') . '"' . (in_array($current, ['leer.php', 'oride.php'], true) ? ' aria-current="page"' : '') . '>' . h(t('nav_read')) . '</a></div></nav></div></header>';
     echo '<main id="main">';
 }
 
@@ -555,7 +555,8 @@ function decl_view(array $r, array $ig, bool $inst = false, bool $reader = false
 {
     $v = ['head' => $inst ? t('req_title') : t('decl_title'), 'typeName' => $r['type'] !== null ? type_name($r['type']) : null,
         'title' => '', 'body' => '', 'mid' => null, 'interval' => null, 'cat' => null, 'ev' => $r['ev'] === 1,
-        'evText' => $inst ? tr('Se exige poder mostrar el proceso de creación', 'Being able to show the creative process is required') : tr('Se puede mostrar el proceso de creación', 'The creative process can be shown'),
+        'evText' => $inst ? tr('Se exige proceso creativo documentado', 'Documented creative process required') : tr('Proceso creativo documentado disponible', 'Documented creative process available'),
+        'amount' => '—',
         'lines' => [], 'complete' => $r['status'] === 'complete'];
     $catWord = fn(string $c) => mb_strtolower(IG_CAT_LABELS[lang()][$c]);
     $pc = fn(float $x) => (string) (int) round($x);
@@ -583,6 +584,7 @@ function decl_view(array $r, array $ig, bool $inst = false, bool $reader = false
     }
     if ($r['ia'] === 0) {
         $v['mid'] = 0.0;
+        $v['amount'] = '0' . $nb . '%';
         return $inst
             ? ['title' => tr('No se permite usar IA', 'AI use is not allowed'), 'body' => tr('Las obras tienen que estar 100' . $nb . '% libres de IA.', 'Works must be 100' . $nb . '% AI-free.')] + $v
             : ['title' => tr('Obra 100' . $nb . '% libre de IA', '100' . $nb . '% AI-free work'), 'body' => tr('La persona autora declara que no utilizó inteligencia artificial en esta obra.', 'The author declares that no artificial intelligence was used in this work.')] + $v;
@@ -600,7 +602,12 @@ function decl_view(array $r, array $ig, bool $inst = false, bool $reader = false
         $v['mid'] = ig_midpoint($ig['IG'][0], $ig['IG'][1]);
         $lo = $pc($ig['IG'][0]);
         $hi = $pc($ig['IG'][1]);
+        // Cifra principal: el punto medio redondeado (el intervalo va en la explicación)
+        $v['amount'] = $hi === '0' && $ig['IG'][1] > 0 ? '<1' . $nb . '%' : $pc($v['mid']) . $nb . '%';
         if ($inst) {
+            // Requisito: la aguja señala el máximo del tramo permitido
+            $v['mid'] = IG_CATS[$cat][1];
+            $v['amount'] = tr('hasta el ', 'up to ') . $pc(IG_CATS[$cat][1]) . $nb . '%';
             return ['title' => tr('Uso máximo de IA: ' . $catWord($cat), 'Maximum AI use: ' . $catWord($cat)),
                 'body' => tr('Cumplen las obras con un uso de IA ' . $catWord($cat) . ' o menor (hasta el ' . $pc(IG_CATS[$cat][1]) . $nb . '%), sin superar los límites de cada actividad.',
                     'Works comply if their AI use is ' . $catWord($cat) . ' or lower (up to ' . $pc(IG_CATS[$cat][1]) . '%), within the limits for each activity.')] + $v;
@@ -615,6 +622,8 @@ function decl_view(array $r, array $ig, bool $inst = false, bool $reader = false
     }
     if ($cat !== null) { // categoría fijada en el código, sin actividades (requisitos)
         $v['cat'] = $cat;
+        $v['mid'] = IG_CATS[$cat][1];
+        $v['amount'] = tr('hasta el ', 'up to ') . $pc(IG_CATS[$cat][1]) . $nb . '%';
         return ['title' => $inst ? tr('Uso máximo de IA: ' . $catWord($cat), 'Maximum AI use: ' . $catWord($cat)) : tr('Uso de IA ' . $catWord($cat), 'AI use: ' . $catWord($cat)),
             'body' => t('ig_cat_declared')] + $v;
     }
@@ -638,95 +647,93 @@ function svg_wrap(string $text, int $max): array
     return $lines;
 }
 
+/** Colores del medidor («frío a cálido»): un color por tramo, de menos a más IA. */
+const DECL_COLORS = ['A' => '#2ba39a', 'B' => '#7cc4a4', 'C' => '#c9d98a', 'D' => '#f2c14e', 'E' => '#ef9a3c', 'F' => '#e0692e'];
+const DECL_INK = '#2d2a26';
+
 /**
- * Figura de la declaración en SVG: tipo de obra, globo con la explicación del índice y escala de 0 a 100 %
- * en seis tramos (A–F, proporcionales). $width: 720 (ancha) o 360 (estrecha). $footer: código y versión al pie (descargas).
+ * Figura de la declaración en SVG (prueba v10): tipo de obra, medidor semicircular de 0 a 100 % en seis
+ * tramos (A–F) con la aguja en el punto medio, la cifra, el título, la explicación y, si las hay,
+ * «Proceso creativo documentado disponible». $footer: código y versión al pie (descargas).
  */
-function decl_svg(array $v, int $width = 720, bool $footer = false): string
+function decl_svg(array $v, bool $footer = false): string
 {
-    $W = $width;
-    $narrow = $W < 560;
-    $X0 = $narrow ? 14 : 40;
-    $X1 = $W - $X0;
-    $px = fn(float $p) => round($X0 + ($X1 - $X0) * $p / 100, 2);
-    $H = $footer ? ($narrow ? 356 : 336) : 300;
+    $W = 400;
+    $cx = 200;
+    $cy = 214;
+    $r = 124;
+    $sw = 28;
     $nb = "\u{00a0}";
+    $body = svg_wrap($v['body'], 52);
+    $evY = $cy + 98 + count($body) * 17 + 6;
+    $H = ($v['ev'] ? $evY + 40 : $evY + 14) + ($footer ? 44 : 0);
     $font = 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif';
-    $label = $v['head'] . ($v['typeName'] ? ' · ' . $v['typeName'] : '') . '. ' . $v['title'] . '. ' . $v['body'] . ($v['ev'] ? ' ' . $v['evText'] . '.' : '');
+    $pt = function (float $p, float $rr) use ($cx, $cy): array { $a = M_PI * (1 - $p / 100); return [round($cx + $rr * cos($a), 2), round($cy - $rr * sin($a), 2)]; };
+    $label = $v['head'] . ($v['typeName'] ? ' · ' . $v['typeName'] : '') . '. ' . ($v['amount'] !== '—' ? $v['amount'] . '. ' : '') . $v['title'] . '. ' . $v['body'] . ($v['ev'] ? ' ' . $v['evText'] . '.' : '');
+    $txt = fn(float $x, float $y, string $t, string $attr) => '<text x="' . $x . '" y="' . $y . '" ' . $attr . '>' . h($t) . '</text>';
     $s = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . $W . ' ' . $H . '" width="' . $W . '" height="' . $H . '" role="img" aria-label="' . h($label) . '" font-family="' . $font . '">';
     $s .= '<title>' . h($label) . '</title>';
     if ($footer) $s .= '<rect width="' . $W . '" height="' . $H . '" fill="#ffffff"/>';
-    $s .= '<text x="' . $X0 . '" y="30" font-size="12" font-weight="600" letter-spacing="2" fill="#154849">' . h(mb_strtoupper($v['head'])) . '</text>';
-    $s .= '<text x="' . $X0 . '" y="62" font-size="26" font-weight="700" fill="' . ($v['typeName'] ? '#0a2b2c' : '#6b7a7b') . '">' . h($v['typeName'] ?? tr('Tipo de obra', 'Type of work')) . '</text>';
-
-    // Escala
-    $barY = 206;
-    $barH = 34;
-    $i = 0;
+    $s .= $txt(16, 26, mb_strtoupper($v['head']), 'font-size="11" font-weight="600" letter-spacing="2" fill="#4a4540"');
+    $s .= $txt(16, 54, $v['typeName'] ?? tr('Tipo de obra', 'Type of work'), 'font-size="22" font-weight="700" fill="' . ($v['typeName'] ? DECL_INK : '#6b7a7b') . '"');
+    // Tramos del medidor
     foreach (IG_CATS as $k => [$lo, $hi]) {
-        $a = $px($lo);
-        $b = $px($hi);
-        $here = $v['cat'] === $k;
-        $s .= '<rect x="' . $a . '" y="' . $barY . '" width="' . round($b - $a, 2) . '" height="' . $barH . '" fill="' . ($here ? '#0e3b3c' : ($i % 2 ? '#a9d2cd' : '#ffffff')) . '"/>';
-        $name = IG_CAT_LABELS[lang()][$k];
-        if (mb_strlen($name) * 6.6 + 6 <= $b - $a) {
-            $s .= '<text x="' . round(($a + $b) / 2, 2) . '" y="' . ($barY + 21) . '" font-size="11.5" text-anchor="middle" font-weight="' . ($here ? 700 : 500) . '" fill="' . ($here ? '#ffffff' : '#0a2b2c') . '">' . h($name) . '</text>';
-        }
-        $i++;
+        [$x0, $y0] = $pt($lo, $r);
+        [$x1, $y1] = $pt($hi, $r);
+        $s .= '<path d="M ' . $x0 . ' ' . $y0 . ' A ' . $r . ' ' . $r . ' 0 0 1 ' . $x1 . ' ' . $y1 . '" fill="none" stroke="' . DECL_COLORS[$k] . '" stroke-width="' . $sw . '"/>';
     }
-    foreach (IG_CATS as [, $hi]) $s .= '<line x1="' . $px($hi) . '" y1="' . $barY . '" x2="' . $px($hi) . '" y2="' . ($barY + $barH) . '" stroke="#0e3b3c" stroke-width="1.5"/>';
-    $s .= '<rect x="' . $X0 . '" y="' . $barY . '" width="' . ($X1 - $X0) . '" height="' . $barH . '" fill="none" stroke="#0e3b3c" stroke-width="2"/>';
-    foreach ($narrow ? [0, 25, 50, 75, 100] : [0, 10, 25, 50, 75, 90, 100] as $p) {
-        $s .= '<line x1="' . $px($p) . '" y1="' . ($barY + $barH) . '" x2="' . $px($p) . '" y2="' . ($barY + $barH + 6) . '" stroke="#0e3b3c" stroke-width="1.5"/>';
-        $s .= '<text x="' . $px($p) . '" y="' . ($barY + $barH + 22) . '" font-size="12" text-anchor="' . ($p === 100 && $narrow ? 'end' : 'middle') . '" fill="#5b6b6c">' . $p . ($p === 100 ? $nb . '%' : '') . '</text>';
+    foreach (IG_CATS as [, $hi]) {
+        [$ax, $ay] = $pt($hi, $r - $sw / 2);
+        [$bx, $by] = $pt($hi, $r + $sw / 2);
+        $s .= '<line x1="' . $ax . '" y1="' . $ay . '" x2="' . $bx . '" y2="' . $by . '" stroke="#ffffff" stroke-width="2"/>';
     }
-    if ($v['interval']) {
-        $a0 = $px($v['interval'][0]);
-        $b0 = $px($v['interval'][1]);
-        if ($b0 - $a0 < 3) { $a0 -= 1.5; $b0 += 1.5; }
-        $s .= '<rect x="' . $a0 . '" y="' . ($barY - 7) . '" width="' . round($b0 - $a0, 2) . '" height="5" rx="2" fill="#2ba39a"/>';
+    // El tramo de la obra, marcado con un borde (no solo con el color)
+    if ($v['cat'] !== null) {
+        [$lo, $hi] = IG_CATS[$v['cat']];
+        $ro = $r + $sw / 2;
+        $ri = $r - $sw / 2;
+        [$a0x, $a0y] = $pt($lo, $ro);
+        [$a1x, $a1y] = $pt($hi, $ro);
+        [$b1x, $b1y] = $pt($hi, $ri);
+        [$b0x, $b0y] = $pt($lo, $ri);
+        $s .= '<path d="M ' . $a0x . ' ' . $a0y . ' A ' . $ro . ' ' . $ro . ' 0 0 1 ' . $a1x . ' ' . $a1y . ' L ' . $b1x . ' ' . $b1y . ' A ' . $ri . ' ' . $ri . ' 0 0 0 ' . $b0x . ' ' . $b0y . ' Z" fill="none" stroke="' . DECL_INK . '" stroke-width="3.5" stroke-linejoin="round"/>';
     }
-
-    // Globo de diálogo (con el tick de evidencias junto al título)
-    $bw = min(380, $W - 24);
-    $body = svg_wrap($v['body'], (int) floor(($bw - 32) / 7.4));
-    $bh = 34 + count($body) * 20 + 10;
-    $by = $barY - 22 - $bh;
-    $tipX = $v['mid'] === null ? null : $px($v['mid']);
-    $bx = max(12, min($W - 12 - $bw, ($tipX ?? $W / 2) - $bw / 2));
-    $tail = $tipX === null ? '' : ' L ' . min(max($tipX + 9, $bx + 18), $bx + $bw - 6) . ' ' . ($by + $bh) . ' L ' . $tipX . ' ' . ($barY - 9) . ' L ' . max(min($tipX - 9, $bx + $bw - 18), $bx + 6) . ' ' . ($by + $bh);
-    $path = 'M ' . ($bx + 10) . ' ' . $by . ' H ' . ($bx + $bw - 10) . ' Q ' . ($bx + $bw) . ' ' . $by . ' ' . ($bx + $bw) . ' ' . ($by + 10)
-        . ' V ' . ($by + $bh - 10) . ' Q ' . ($bx + $bw) . ' ' . ($by + $bh) . ' ' . ($bx + $bw - 10) . ' ' . ($by + $bh) . $tail
-        . ' H ' . ($bx + 10) . ' Q ' . $bx . ' ' . ($by + $bh) . ' ' . $bx . ' ' . ($by + $bh - 10) . ' V ' . ($by + 10) . ' Q ' . $bx . ' ' . $by . ' ' . ($bx + 10) . ' ' . $by . ' Z';
-    $s .= '<path d="' . $path . '" fill="#eef6f5" stroke="#0e3b3c" stroke-width="2" stroke-linejoin="round"/>';
-    $s .= '<text x="' . ($bx + 16) . '" y="' . ($by + 26) . '" font-size="17" font-weight="700" fill="#0a2b2c">' . h($v['title']) . '</text>';
+    foreach ([0, 25, 50, 75, 100] as $p) {
+        [$qx, $qy] = $pt($p, $r + $sw / 2 + 12);
+        $s .= $txt($qx, $qy + 4, $p . ($p === 100 ? $nb . '%' : ''), 'font-size="11" text-anchor="' . ($p === 50 ? 'middle' : ($p < 50 ? 'end' : 'start')) . '" fill="#5b6b6c"');
+    }
+    // Aguja en el punto medio
+    if ($v['mid'] !== null) {
+        [$nx, $ny] = $pt($v['mid'], $r - $sw / 2 - 6);
+        $s .= '<line x1="' . $cx . '" y1="' . $cy . '" x2="' . $nx . '" y2="' . $ny . '" stroke="' . DECL_INK . '" stroke-width="4" stroke-linecap="round"/>'
+            . '<circle cx="' . $cx . '" cy="' . $cy . '" r="9" fill="' . DECL_INK . '"/>';
+    }
+    $s .= $txt($cx, $cy + 44, $v['amount'], 'font-size="' . (mb_strlen($v['amount']) > 6 ? 26 : 30) . '" font-weight="700" text-anchor="middle" fill="' . DECL_INK . '"');
+    $s .= $txt($cx, $cy + 74, $v['title'], 'font-size="17" font-weight="700" text-anchor="middle" fill="' . DECL_INK . '"');
+    foreach ($body as $n => $l) $s .= $txt($cx, $cy + 98 + $n * 17, $l, 'font-size="13" text-anchor="middle" fill="#1c2526"');
     if ($v['ev']) {
-        $cx = min($bx + 16 + mb_strlen($v['title']) * 9.6 + 20, $bx + $bw - 16);
-        $cy = $by + 20;
-        $s .= '<g data-ev-tick><title>' . h($v['evText']) . '</title><circle cx="' . $cx . '" cy="' . $cy . '" r="10" fill="#1f6b45"/><path d="M ' . ($cx - 5) . ' ' . $cy . ' l 3.5 3.5 l 6.5 -7" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>';
+        $ew = mb_strlen($v['evText']) * 7.2 + 28;
+        $s .= '<g data-ev><rect x="' . round($cx - $ew / 2, 2) . '" y="' . $evY . '" width="' . round($ew, 2) . '" height="24" rx="12" fill="#f4f1ec" stroke="' . DECL_INK . '" stroke-width="1"/>'
+            . $txt($cx, $evY + 16.5, $v['evText'], 'font-size="12.5" font-weight="600" text-anchor="middle" fill="' . DECL_INK . '"') . '</g>';
     }
-    foreach ($body as $n => $l) $s .= '<text x="' . ($bx + 16) . '" y="' . ($by + 50 + $n * 20) . '" font-size="14.5" fill="#1c2526">' . h($l) . '</text>';
-
     if ($footer) {
-        $y = $H - ($narrow ? 36 : 16);
-        $s .= '<line x1="' . $X0 . '" y1="' . ($H - ($narrow ? 60 : 40)) . '" x2="' . $X1 . '" y2="' . ($H - ($narrow ? 60 : 40)) . '" stroke="#e3e8e6"/>';
-        $s .= '<text x="' . $X0 . '" y="' . $y . '" font-size="12" fill="#5b6b6c">' . h(t('code_label')) . ' <tspan font-family="ui-monospace, Menlo, Consolas, monospace" fill="#1c2526">' . h(implode(' ', $v['lines'])) . '</tspan></text>';
-        $s .= '<text x="' . ($narrow ? $X0 : $X1) . '" y="' . ($narrow ? $y + 20 : $y) . '" font-size="11" text-anchor="' . ($narrow ? 'start' : 'end') . '" fill="#5b6b6c">' . h(($v['ev'] ? '✓ ' . $v['evText'] . ' · ' : '') . IG_CURRENT) . '</text>';
+        $y = $H - 18;
+        $s .= '<line x1="16" y1="' . ($H - 40) . '" x2="384" y2="' . ($H - 40) . '" stroke="#e3e8e6"/>';
+        $s .= '<text x="16" y="' . $y . '" font-size="11" fill="#5b6b6c">' . h(t('code_label')) . ' <tspan font-family="ui-monospace, Menlo, Consolas, monospace" fill="#1c2526">' . h(implode(' ', $v['lines'])) . '</tspan></text>';
     }
     return $s . '</svg>';
 }
 
-/** La figura para la página: ancha y estrecha (se elige por el ancho de la caja) y la versión para descargar. */
+/** La figura para la página y la versión para descargar (con el código al pie). */
 function decl_figure(array $v): string
 {
-    return '<div class="fig fig-wide">' . decl_svg($v, 720) . '</div><div class="fig fig-narrow">' . decl_svg($v, 360) . '</div>'
-        . '<template data-export>' . decl_svg($v, 720, true) . '</template>';
+    return '<div class="fig">' . decl_svg($v) . '</div><template data-export>' . decl_svg($v, true) . '</template>';
 }
 
 /** Texto de la figura para lectores de pantalla y para la barra fija del móvil. */
 function decl_text(array $v): string
 {
-    return $v['head'] . ($v['typeName'] ? ', ' . $v['typeName'] : '') . '. ' . $v['title'] . '. ' . $v['body'] . ($v['ev'] ? ' ' . $v['evText'] . '.' : '');
+    return $v['head'] . ($v['typeName'] ? ', ' . $v['typeName'] : '') . '. ' . ($v['amount'] !== '—' ? $v['amount'] . '. ' : '') . $v['title'] . '. ' . $v['body'] . ($v['ev'] ? ' ' . $v['evText'] . '.' : '');
 }
 
 /** Desglose del cálculo (oride.php): intervalo, punto medio, categoría, G, P, actividades y versiones. */
@@ -748,13 +755,20 @@ function ig_breakdown(array $ig, array $r, array $extra = []): string
         $html .= ' · ' . h(t('ig_q')) . ': ' . h(num_range([$ig['q'][0] * 100, $ig['q'][1] * 100], 1, tr(' %', '%'))) . ' (' . h(t($src)) . ')';
     }
     $html .= '</li><li>' . h(t('ig_P')) . ': <b>' . h(num_range($ig['P'], 3)) . '</b></li><li>IG = G + (100 − G) · P</li>';
-    foreach ($ig['rows'] as $row) {
-        $parts = [$row['role'] === 'gen' ? t('ig_role_gen') : t('ig_role_aux', num($row['weight'], 2)), t('ig_factor', num($row['factor'], 2))];
-        if ($row['scope'] !== null) $parts[] = t('ig_scope', num_range([$row['S'][0] * 100, $row['S'][1] * 100], 0, tr(' %', '%')));
-        if ($row['contrib'] !== null) $parts[] = t('ig_contrib', num_range($row['contrib'], 4));
-        $html .= '<li><span class="mono">' . h(act_part($row['act'], $row['level'], $row['scope'])) . '</span> ' . h(acts($r['type'])[$row['act']][0] . ': ' . implode(' · ', $parts)) . '</li>';
-    }
     $html .= '<li>' . h(t('ig_exact', num_range($ig['IG']))) . '</li></ul>';
+    // Actividades en una tabla
+    $html .= '<div class="table-scroll" role="region" aria-labelledby="bd-cap" tabindex="0"><table class="acts-table"><caption id="bd-cap">' . h(tr('Actividades en el cálculo', 'Activities in the calculation')) . '</caption><thead><tr>'
+        . '<th scope="col">' . h(tr('Actividad', 'Activity')) . '</th><th scope="col">' . h(tr('Uso', 'Use')) . '</th><th scope="col">' . h(tr('Alcance', 'Scope')) . '</th>'
+        . '<th scope="col">' . h(tr('Cuenta en', 'Counts in')) . '</th><th scope="col">' . h(tr('Factor', 'Factor')) . '</th><th scope="col">' . h(tr('Aporta a P', 'Adds to P')) . '</th></tr></thead><tbody>';
+    foreach ($ig['rows'] as $row) {
+        $html .= '<tr><th scope="row"><span class="mono">' . h(act_part($row['act'], $row['level'], $row['scope'])) . '</span> ' . h(acts($r['type'])[$row['act']][0]) . '</th>'
+            . '<td>' . h(LEVELS_READER[lang()][$row['level']]) . '</td>'
+            . '<td>' . h($row['scope'] === null ? '—' : num_range([$row['S'][0] * 100, $row['S'][1] * 100], 0, tr(' %', '%'))) . '</td>'
+            . '<td>' . h($row['role'] === 'gen' ? tr('G (generativa)', 'G (generative)') : tr('P, peso ', 'P, weight ') . num($row['weight'], 2)) . '</td>'
+            . '<td>' . h(num($row['factor'], 2)) . '</td>'
+            . '<td>' . h($row['contrib'] === null ? '—' : num_range($row['contrib'], 4)) . '</td></tr>';
+    }
+    $html .= '</tbody></table></div>';
     $html .= '<p class="ig-ver">' . h(t('ig_versions', $ig['version'], IG_CAT_VERSION, $ig['taxonomy'] ?? ORIDE_TAXONOMY)) . '</p>';
     $html .= '<p class="ig-links"><a href="' . h(u('calc.php?' . http_build_query(['code' => $r['code']] + array_filter(['q' => $extra['q'] ?? null, 'qp' => $extra['qp'] ?? null], fn($x) => $x !== null && $x !== '') + ['format' => 'json']))) . '" download>' . h(t('ig_download')) . '</a>'
         . ' · <a href="' . u('indice.php') . '">' . h(t('ig_how')) . '</a></p>';
@@ -762,11 +776,11 @@ function ig_breakdown(array $ig, array $r, array $extra = []): string
 }
 
 /**
- * Caja «Declaración ORIDE» (v10): figura con el índice, descargas en PNG y SVG y, en letra pequeña,
- * el código con «Copiar código» y «Copiar enlace».
+ * Declaración ORIDE: la caja con la figura (medidor) y, fuera de la caja, las descargas en PNG y SVG
+ * y el código en letra pequeña con «Copiar código» y «Copiar enlace».
  * @param array{live?:bool, inst?:bool, reader?:bool, actions?:bool, extra?:array, verify?:bool} $o
  *   live: la rellena oride.js (crear.php e instituciones.php); inst: requisito; reader: para quien lee el código;
- *   actions: descargas y botones de copiar; verify: botón «Verificar una entrega» (instituciones)
+ *   actions: descargas, código y botones de copiar; verify: botón «Verificar una entrega» (instituciones)
  */
 function code_box(array $r, array $o = []): string
 {
@@ -778,10 +792,10 @@ function code_box(array $r, array $o = []): string
     $v = decl_view($r, $ig, $inst, !empty($o['reader']));
     $complete = $v['complete'];
     $dis = $complete ? '' : ' disabled';
-    $html = '<section class="decl-box" id="declaracion" aria-labelledby="decl-title"' . ($live ? ' data-box' : '') . ' data-file="' . h($complete ? 'oride-' . strtolower($r['code']) : 'oride') . '">'
-        . '<h2 class="sr-only" id="decl-title">' . h($v['head']) . '</h2>'
+    $html = '<div class="decl" id="declaracion"' . ($live ? ' data-box' : '') . ' data-file="' . h($complete ? 'oride-' . strtolower($r['code']) : 'oride') . '">'
+        . '<section class="decl-box" aria-labelledby="decl-title"><h2 class="sr-only" id="decl-title">' . h($v['head']) . '</h2>'
         . '<div class="decl-figure" data-figure aria-hidden="true">' . decl_figure($v) . '</div>'
-        . '<p class="sr-only" data-figure-text' . ($live ? ' aria-live="polite"' : '') . '>' . h(decl_text($v)) . '</p>';
+        . '<p class="sr-only" data-figure-text' . ($live ? ' aria-live="polite"' : '') . '>' . h(decl_text($v)) . '</p></section>';
     if ($actions) {
         $html .= '<div class="decl-actions">'
             . '<button type="button" class="btn btn-secondary btn-sm" data-download="png"' . $dis . '>' . h(tr('Descargar imagen PNG', 'Download PNG image')) . '</button>'
@@ -789,14 +803,11 @@ function code_box(array $r, array $o = []): string
         if (!empty($o['verify'])) {
             $html .= '<a class="btn btn-primary btn-sm" data-verify' . ($complete ? ' href="' . h(u('comprobar.php?r=' . rawurlencode($r['code']))) . '"' : ' aria-disabled="true"') . '>' . h(t('cmp_title')) . '</a>';
         }
-        $html .= '</div>';
+        $html .= '</div><div class="decl-code"><span>' . h(t('code_label')) . ' <code data-code>' . h(implode(' ', $v['lines'])) . '</code></span>'
+            . '<button type="button" class="link-btn" data-copy-code="' . h($complete ? 'ORIDE ' . implode("\n", $r['lines']) : '') . '"' . $dis . '>' . h(t('copy_code')) . '</button>'
+            . '<button type="button" class="link-btn" data-copy-link="' . h($complete ? code_url($r['code'], $extra) : '') . '"' . $dis . '>' . h(t('copy_link')) . '</button></div>';
     }
-    $html .= '<div class="decl-code"><span>' . h(t('code_label')) . ' <code data-code>' . h(implode(' ', $v['lines'])) . '</code></span>';
-    if ($actions) {
-        $html .= '<button type="button" class="link-btn" data-copy-code="' . h($complete ? 'ORIDE ' . implode("\n", $r['lines']) : '') . '"' . $dis . '>' . h(t('copy_code')) . '</button>'
-            . '<button type="button" class="link-btn" data-copy-link="' . h($complete ? code_url($r['code'], $extra) : '') . '"' . $dis . '>' . h(t('copy_link')) . '</button>';
-    }
-    return $html . '</div></section>';
+    return $html . '</div>';
 }
 
 /** Texto de una página en el idioma actual: tr('español', 'English'). */

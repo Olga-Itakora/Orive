@@ -826,3 +826,28 @@ html { scroll-padding-top: 16px; }
 .create-form #q-acts > .hint { margin: 0 0 12px; }
 .breakdown .ig-ver { font-size: 0.8125rem; color: var(--muted); margin: 8px 0 4px; }
 .breakdown .ig-links { font-size: 0.875rem; }
+
+/* ===== ORIDE v10.1: caja con el medidor; descargas y código fuera de la caja ===== */
+.decl-box { border-color: #2d2a26; padding: 12px 12px 8px; }
+.decl .decl-actions { margin: 12px 0 8px; }
+.decl .decl-code { border-top: 0; padding-top: 0; }
+/* Menú: «Lee un código» en secundario y el cambio de idioma en terciario */
+.menu-actions .btn-secondary { border-color: var(--petrol-800); color: var(--petrol-800); }
+.lang-switch { border-color: transparent; text-decoration: underline; text-underline-offset: 3px; padding: 0 8px; }
+.lang-switch:hover { background: none; color: var(--petrol-900); }
+/* oride.php: explicación a la izquierda, declaración a la derecha */
+.code-page { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 900px) { .code-page { grid-template-columns: minmax(0, 1fr) minmax(0, 24rem); } .code-page .code-aside { position: sticky; top: 24px; } }
+.acts-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin: 8px 0 16px; background: var(--surface); }
+.acts-table caption { text-align: left; font-weight: 600; padding: 4px 0 8px; }
+.acts-table th, .acts-table td { text-align: left; vertical-align: top; padding: 8px; border: 1px solid var(--line); }
+.acts-table thead th { background: var(--paper); font-weight: 600; white-space: normal; color: var(--ink); font-size: 0.8125rem; }
+.acts-table .mono { font-weight: 600; }
+.site-code { font: 1rem var(--mono); margin: 8px 0 16px; }
+.ig-example { max-width: 26rem; margin: 16px 0; }
+.acts-table tbody th { font-size: 0.875rem; font-weight: 500; color: var(--ink); background: var(--surface); }
+.acts-table th, .acts-table td { white-space: normal; overflow-wrap: anywhere; }
+.site-code a { display: inline-block; padding: 3px 0; overflow-wrap: anywhere; }
+.acts-table th, .acts-table td { overflow-wrap: break-word; hyphens: auto; }
+.breakdown .acts-table { min-width: 560px; }
+@media (max-width: 480px) { .acts-table th, .acts-table td { padding: 6px; font-size: 0.8125rem; } }

@@ -11,27 +11,26 @@ $example = oride_compute(['type' => 'LI', 'ia' => 'si', 'ev' => 'si', 'acts' => 
     <p class="lead">ORIDE is a declaration of the use of AI tools in the authorship of artistic, scientific and technical works, based on the honour, honesty and personal ethics of the author.</p>
     <div class="card honor"><p>There is no verification system or certification behind it.</p></div>
     <h2>Two elements</h2>
-    <p>When you fill in the declaration, ORIDE creates two things:</p>
+    <p>When you fill in the declaration, ORIDE creates two things: the ORIDE Global Index and the ORIDE Code.</p>
   <?php else: ?>
     <p class="lead">ORIDE es una declaración del uso de herramientas de IA en la autoría de obras artísticas, científicas y técnicas, basada en el honor, la honestidad y la ética personal de la persona autora.</p>
     <div class="card honor"><p>No hay un sistema de verificación ni una certificación detrás.</p></div>
     <h2>Dos elementos</h2>
-    <p>Al rellenar la declaración, ORIDE crea dos cosas:</p>
+    <p>Al rellenar la declaración, ORIDE crea dos cosas: el Índice Global ORIDE y el Código ORIDE.</p>
   <?php endif; ?>
-  <div class="two-elements">
-    <section class="card">
-      <h3><?= h(t('code_label')) ?></h3>
-      <p class="formula code-example"><?= implode('<br>', array_map('h', $example['lines'])) ?></p>
-      <p class="muted"><?= h(tr('Describe cómo se usó la IA: qué tipo de obra es, si se usó IA, si hay evidencias y, si quieres, en qué actividades y cuánto.', 'Describes how AI was used: what type of work it is, whether AI was used, whether there is evidence and, optionally, in which activities and how much.')) ?></p>
-      <a href="<?= u('codigo.php') ?>"><?= h(tr('Cómo se lee el código', 'How to read the code')) ?></a>
-    </section>
-    <section class="card ig-card">
-      <h3><?= h(t('ig_title')) ?></h3>
-      <p class="ig-sample"><?= h(decl_view($example, ig_from_result($example))['title']) ?></p>
-      <p class="muted"><?= h(tr('Estima de 0 a 100 cuánto contribuyó la IA a la obra y lo clasifica en seis categorías, de A (muy bajo) a F (extremo). Generar contenido pesa mucho más que documentarse o corregir. Es una metodología experimental, abierta a revisión.', 'Estimates from 0 to 100 how much AI contributed to the work and classifies it into six categories, from A (very low) to F (extreme). Generating content weighs much more than research or proofreading. It is an experimental methodology, open to review.')) ?></p>
-      <a href="<?= u('indice.php') ?>"><?= h(t('ig_how')) ?></a>
-    </section>
-  </div>
+  <section class="spaced" aria-labelledby="ig-intro">
+    <h3 id="ig-intro"><?= h(t('ig_title')) ?></h3>
+    <p><?= h(tr('Estima de 0 a 100 cuánto aportó la IA a la obra y lo sitúa en seis tramos, de «muy bajo» a «extremo». Generar contenido pesa mucho más que documentarse o corregir. Es una metodología experimental, abierta a revisión.', 'It estimates from 0 to 100 how much AI contributed to the work and places it in six bands, from “very low” to “extreme”. Generating content weighs much more than research or proofreading. It is an experimental methodology, open to review.')) ?></p>
+    <div class="ig-example"><?= code_box($example, ['reader' => true, 'actions' => false]) ?></div>
+    <p class="muted small"><?= h(tr('Ejemplo: una novela en la que se usó la IA para generar ideas y para la revisión de formato.', 'Example: a novel in which AI was used to generate ideas and for form review.')) ?></p>
+    <a href="<?= u('indice.php') ?>"><?= h(t('ig_how')) ?></a>
+  </section>
+  <section class="spaced" aria-labelledby="code-intro">
+    <h3 id="code-intro"><?= h(t('code_label')) ?></h3>
+    <p><?= h(tr('Es una forma estructurada de declarar el uso de la IA, pensada para que la lean sistemas automatizados: indica el tipo de obra, el uso de IA (con el tramo del índice), si hay evidencias y, si quieres, en qué actividades y cuánto.', 'It is a structured way of declaring the use of AI, intended to be read by automated systems: it states the type of work, the use of AI (with the index band), whether there is evidence and, optionally, in which activities and how much.')) ?></p>
+    <p class="formula code-example"><?= implode('<br>', array_map('h', $example['lines'])) ?></p>
+    <a href="<?= u('codigo.php') ?>"><?= h(tr('Cómo se lee el código', 'How to read the code')) ?></a>
+  </section>
   <p class="actions spaced"><a class="btn btn-primary btn-lg" href="<?= u('crear.php') ?>"><?= h(t('nav_create')) ?></a><a class="btn btn-secondary btn-lg" href="<?= u('como-funciona.php') ?>"><?= h(t('nav_how')) ?></a></p>
 </div>
 <?php page_end();
