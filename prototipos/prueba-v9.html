@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORIDE · prueba v9</title>
+<!--
+  ORIDE · prueba v9 — prototipo autónomo (HTML, CSS y JavaScript en un solo archivo; se abre directamente en el navegador).
+  El medidor con los colores «frío a cálido» (color 5 de la prueba v8), sin el arco del rango y con el punto medio como cifra principal. Todas muestran lo mismo: cuánto aportó la IA a la obra
+  (intervalo estimado de 0 a 100 %), en cuál de los seis tramos cae y si se puede mostrar el proceso de creación.
+  Mismo algoritmo que la web; no cambia nada del cálculo.
+-->
+<style>
+  :root {
+    --paper: #faf8f4; --surface: #fff; --ink: #1c2526; --muted: #5b6b6c; --line: #e3e8e6; --line-strong: #c9d3d1;
+    --petrol-50: #eef6f5; --petrol-200: #a9d2cd; --petrol-600: #1b5a5b; --petrol-700: #154849; --petrol-800: #0e3b3c; --petrol-900: #0a2b2c;
+    --accent: #2ba39a; --danger: #a3261f;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.5 var(--font); }
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .lead { color: var(--muted); margin: 0 0 16px; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+  .lab { border: 1px dashed var(--petrol-200); border-radius: 8px; padding: 12px 16px; margin: 0 0 24px; background: var(--surface); }
+  .lab label { display: block; font-weight: 600; font-size: 0.875rem; margin-bottom: 4px; }
+  .lab-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .lab input { flex: 1 1 260px; min-height: 40px; padding: 6px 12px; font: 1rem var(--mono); border: 1px solid var(--line-strong); border-radius: 8px; text-transform: uppercase; }
+  .btn { min-height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--petrol-800); background: var(--petrol-800); color: #fff; font: 500 0.875rem var(--font); cursor: pointer; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { min-height: 32px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--petrol-200); background: var(--petrol-50); color: var(--petrol-800); font: 0.8125rem var(--font); cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--petrol-800); color: #fff; border-color: var(--petrol-800); }
+  .error { color: var(--danger); font-size: 0.875rem; margin: 6px 0 0; }
+
+  .grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+  .grid { max-width: 560px; margin: 0 auto; }
+  .option h2 { font-size: 1rem; margin: 0 0 2px; }
+  .option .why { font-size: 0.875rem; color: var(--muted); margin: 0 0 8px; }
+  .decl { background: var(--surface); border: 2px solid var(--petrol-800); border-radius: 12px; padding: 12px 12px 8px; }
+  .decl svg { display: block; width: 100%; height: auto; }
+  .code { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 8px; font-size: 0.8125rem; color: var(--muted); }
+  .code code { font: 0.8125rem var(--mono); color: var(--ink); }
+</style>
+</head>
+<body>
+<main>
+  <h1>ORIDE · prueba v9 — medidor «frío a cálido»</h1>
+  <p class="lead">El medidor elegido: colores de frío a cálido, sin el arco del rango y con el punto medio como cifra principal. El rango sigue en la explicación.</p>
+
+  <form class="lab" id="lab" autocomplete="off">
+    <label for="code-input">Prueba con un código ORIDE (solo para el prototipo)</label>
+    <div class="lab-row">
+      <input id="code-input" spellcheck="false" aria-describedby="code-error" value="DS-IGB-EV1-IDE22-GEN32">
+      <button class="btn" type="submit">Mostrar</button>
+    </div>
+    <p class="error" id="code-error" hidden></p>
+    <div class="chips" aria-label="Ejemplos">
+      <button type="button" class="chip" data-code="PH-IGA-EV1-REV44-RET32">Fotografía retocada</button>
+      <button type="button" class="chip" data-code="DS-IGB-EV1-IDE22-GEN32">Diseño</button>
+      <button type="button" class="chip" data-code="LI-IGC-EV1-DOC44-GEN34">Novela</button>
+      <button type="button" class="chip" data-code="ACA-IGD-EV0-DOC54-IDE54-EST54-ANA54-ARG54-REV54-FOR54-REF54-VAL54">Trabajo académico</button>
+      <button type="button" class="chip" data-code="MU-IGE-EV0-COM44-MIX43">Música</button>
+      <button type="button" class="chip" data-code="AU-IGE-EV1-GEN54">Audiovisual generado</button>
+      <button type="button" class="chip" data-code="LI-IA0-EV1">Sin IA</button>
+      <button type="button" class="chip" data-code="SC-IA1-EV1">IA sin detalle</button>
+    </div>
+  </form>
+
+  <div class="grid" id="grid"></div>
+</main>
+
+<script>
+// ===== ENGINE START (mismo algoritmo que el motor PHP; datos copiados de él) =====
+var D = {"version":"ORIDE-IG-1.0-experimental","catVersion":"ORIDE-IG-CAT-1.0","taxonomy":"ORIDE Code 3.1","factors":[0.0,0.0,0.2,0.5,0.85,1.0],"scope":[[0.0,0.05],[0.05,0.25],[0.25,0.5],[0.5,0.75],[0.75,1.0]],"weights":{"LI":{"DOC":["aux",0.05],"IDE":["aux",0.1],"EST":["aux",0.15],"GEN":["gen",null],"REV":["aux",0.1],"FOR":["aux",0.05]},"SC":{"DOC":["aux",0.05],"HIP":["aux",0.1],"MET":["aux",0.1],"DAT":["aux",0.05],"ANA":["aux",0.05],"INT":["aux",0.05],"RED":["gen",null],"REV":["aux",0.05],"FOR":["aux",0.05]},"MU":{"IDE":["aux",0.1],"COM":["gen",null],"ARR":["gen",null],"GEN":["gen",null],"INT":["gen",null],"MIX":["aux",0.1],"MAS":["aux",0.05],"RES":["aux",0.05]},"PH":{"PLA":["aux",0.1],"CAP":["aux",0.1],"REV":["aux",0.05],"RET":["aux",0.1],"MOD":["gen",null],"GEN":["gen",null],"REC":["gen",null]},"IL":{"REF":["aux",0.05],"IDE":["aux",0.1],"COM":["aux",0.15],"GEN":["gen",null],"TRA":["gen",null],"RET":["aux",0.05],"AMP":["gen",null],"VAR":["aux",0.05],"REV":["aux",0.05],"FIN":["aux",0.05]},"DS":{"IDE":["aux",0.1],"VAR":["aux",0.1],"COM":["aux",0.15],"GEN":["gen",null],"MOD":["aux",0.05],"ADA":["aux",0.05],"FIN":["aux",0.05]},"AU":{"GUI":["aux",0.15],"STO":["aux",0.1],"GEN":["gen",null],"VOZ":["gen",null],"MON":["aux",0.1],"EFX":["gen",null],"DOB":["gen",null],"POS":["aux",0.05]},"SW":{"REQ":["aux",0.05],"ARQ":["aux",0.15],"COD":["gen",null],"REF":["aux",0.1],"DEP":["aux",0.1],"PRU":["aux",0.05],"DOC":["aux",0.05]},"TR":{"DOC":["aux",0.05],"INT":["aux",0.1],"GEN":["gen",null],"ADA":["aux",0.1],"REV":["aux",0.1],"STY":["aux",0.05],"LOC":["aux",0.05],"VAL":["aux",0.05]},"ACA":{"DOC":["aux",0.05],"IDE":["aux",0.08],"EST":["aux",0.08],"ANA":["aux",0.1],"ARG":["aux",0.12],"GEN":["gen",null],"REV":["aux",0.07],"FOR":["aux",0.03],"REF":["aux",0.02],"VAL":["aux",0.05]}},"types":{"SC":{"name":"Investigación científica","acts":[["DOC","Búsqueda y revisión bibliográfica","Localización, análisis y síntesis de publicaciones y antecedentes científicos."],["HIP","Preguntas e hipótesis","Formulación y exploración de preguntas de investigación, hipótesis y variables."],["MET","Diseño metodológico","Diseño de estudios, experimentos, protocolos, instrumentos y procedimientos."],["DAT","Recogida y preparación de datos","Extracción, etiquetado, limpieza, transformación y generación de datos sintéticos."],["ANA","Análisis de datos","Aplicación de técnicas estadísticas, computacionales y de modelado para analizar datos."],["INT","Interpretación de resultados","Exploración de hallazgos, identificación de patrones, discusión e interpretación científica."],["RED","Redacción científica","Elaboración de secciones, resúmenes, tablas, figuras y otros contenidos científicos."],["REV","Revisión científica","Evaluación crítica de la metodología, argumentación, resultados, conclusiones y limitaciones."],["FOR","Revisión formal y presentación","Corrección lingüística, referencias, formato y adaptación a normas editoriales."]]},"LI":{"name":"Literatura","acts":[["DOC","Documentación","Búsqueda de información, datos, fuentes, antecedentes y referencias para elaborar el texto."],["IDE","Generación de ideas","Exploración de conceptos, argumentos, tramas, personajes, enfoques o alternativas creativas."],["EST","Estructuración","Planificación de capítulos, secciones, escenas y organización global del texto."],["GEN","Generación de contenido","Producción de frases, párrafos, capítulos, diálogos u otros contenidos textuales."],["REV","Revisión de contenido","Análisis de coherencia, argumentación, continuidad, consistencia y desarrollo de ideas."],["FOR","Revisión de formato","Corrección de ortografía, gramática, puntuación, claridad, estilo y expresión."]]},"MU":{"name":"Música y sonido","acts":[["IDE","Ideación musical","Exploración de conceptos sonoros, estilos, referencias, motivos y propuestas musicales."],["COM","Composición","Generación o desarrollo de melodías, armonías, ritmos y estructuras musicales."],["ARR","Arreglos musicales","Orquestación, instrumentación, armonización y adaptación de composiciones existentes."],["GEN","Generación sonora","Creación de voces, instrumentos, fragmentos musicales, efectos o sonidos sintéticos."],["INT","Interpretación","Asistencia o generación de interpretaciones vocales e instrumentales y sus características expresivas."],["MIX","Mezcla y producción","Procesamiento, ecualización, balance, espacialización y combinación de pistas."],["MAS","Masterización","Optimización del sonido final, dinámica, niveles, equilibrio espectral y preparación de distribución."],["RES","Restauración de audio","Reducción de ruido, reparación, separación de fuentes y recuperación de grabaciones."]]},"PH":{"name":"Fotografía","acts":[["PLA","Planificación de la toma","Propuestas de encuadre, iluminación, localización, composición y configuración previa."],["CAP","Captura asistida","Enfoque, exposición, seguimiento, selección de tomas y otras operaciones de captura mediante IA."],["REV","Revelado y ajustes técnicos","Ajustes de exposición, color, balance de blancos, contraste y procesamiento de archivos fotográficos."],["RET","Retoque fotográfico","Corrección de imperfecciones, ajustes locales, tratamiento de retratos y modificaciones de apariencia."],["MOD","Modificación de elementos","Eliminación, sustitución, incorporación o alteración de objetos, personas y partes de una escena."],["GEN","Generación visual","Creación de imágenes completas o componentes visuales sintéticos mediante IA."],["REC","Reconstrucción y mejora","Ampliación, completado de regiones, recuperación de detalle, reducción de ruido y mejora de resolución."]]},"IL":{"name":"Ilustración","acts":[["REF","Documentación y referencias","Exploración de referentes visuales, estilos, materiales, anatomía y otros recursos."],["IDE","Conceptualización","Generación de conceptos visuales, personajes, escenarios y alternativas creativas."],["COM","Composición y bocetado","Elaboración de bocetos, encuadres, distribución de elementos y organización visual."],["GEN","Generación de imágenes","Creación de ilustraciones completas, personajes, fondos, objetos y otros elementos gráficos."],["TRA","Transformación de imágenes","Transformación de bocetos o imágenes existentes, variaciones de estilo y modificaciones visuales."],["RET","Retoque y edición","Ajuste de colores, iluminación, proporciones, detalles y corrección de imperfecciones."],["AMP","Ampliación y reconstrucción","Extensión del lienzo, completado de regiones, reconstrucción y mejora de resolución."],["VAR","Variantes y adaptación","Generación de versiones para estilos, composiciones, tamaños o soportes diferentes."],["REV","Revisión visual","Evaluación de composición, legibilidad, coherencia estética y adecuación al encargo."],["FIN","Preparación final","Optimización, separación de elementos, preparación de archivos y exportación."]]},"DS":{"name":"Diseño","acts":[["IDE","Conceptualización","Definición de propuestas, conceptos, estilos, soluciones y direcciones creativas."],["VAR","Exploración de alternativas","Generación y comparación de variantes de diseño, estilos, colores y configuraciones."],["COM","Composición visual","Distribución de elementos, jerarquía visual, organización espacial y composición."],["GEN","Generación de elementos","Producción de gráficos, iconos, logotipos, texturas, modelos y otros recursos visuales."],["MOD","Edición y transformación","Modificación de formas, materiales, colores, proporciones o elementos visuales existentes."],["ADA","Adaptación de formatos","Adecuación de diseños a distintos tamaños, soportes, medios y contextos de uso."],["FIN","Producción final","Preparación técnica de archivos, optimización, exportación y generación de entregables."]]},"AU":{"name":"Audiovisual","acts":[["GUI","Guion y narrativa","Creación o revisión de guiones, diálogos, secuencias y planteamientos narrativos."],["STO","Storyboard y previsualización","Generación de bocetos de planos, animáticas y propuestas de planificación visual."],["GEN","Generación audiovisual","Creación de imágenes en movimiento, secuencias, animaciones o escenas sintéticas."],["VOZ","Voces y sonido","Generación o transformación de voces, narraciones, sonidos y elementos de audio."],["MON","Montaje y edición","Selección, organización, sincronización y edición de planos y secuencias."],["EFX","Efectos visuales","Creación, modificación o integración de efectos, elementos y composiciones visuales."],["DOB","Doblaje y subtitulado","Traducción, síntesis o adaptación de voces, sincronización labial y creación de subtítulos."],["POS","Posproducción","Corrección de color, mejora de imagen y sonido, restauración y acabado técnico."]]},"SW":{"name":"Software y programación","acts":[["REQ","Análisis de requisitos","Identificación, especificación y organización de funcionalidades, restricciones y necesidades."],["ARQ","Diseño y arquitectura","Diseño de componentes, interfaces, estructuras de datos y organización del sistema."],["COD","Generación de código","Producción de funciones, clases, módulos, scripts y otros componentes de software."],["REF","Refactorización","Reestructuración y mejora del código existente, manteniendo su comportamiento previsto."],["DEP","Depuración","Detección, diagnóstico y propuesta de soluciones para errores de software."],["PRU","Pruebas y validación","Generación de pruebas, casos de prueba, datos de ensayo y análisis de resultados."],["DOC","Documentación técnica","Elaboración de comentarios, manuales, explicaciones, especificaciones y documentación de API."]]},"TR":{"name":"Traducción","acts":[["DOC","Documentación y terminología","Búsqueda de equivalencias terminológicas, referencias culturales, contexto lingüístico y recursos de apoyo a la traducción."],["INT","Interpretación del original","Análisis del significado, ambigüedades, expresiones idiomáticas, referencias culturales y matices del contenido original."],["GEN","Generación de traducciones","Producción mediante IA de traducciones completas o parciales de textos, diálogos u otros contenidos entre idiomas."],["ADA","Adaptación lingüística y cultural","Adaptación de expresiones, referencias culturales, registros, tono y convenciones al público y contexto de destino."],["REV","Revisión de traducciones","Evaluación y corrección de fidelidad, precisión terminológica, omisiones, errores de sentido y coherencia respecto al original."],["STY","Revisión de estilo","Mejora de naturalidad, fluidez, claridad, uniformidad del registro y calidad expresiva en el idioma de destino."],["LOC","Localización","Adaptación de interfaces, videojuegos, aplicaciones, formatos, unidades, convenciones y otros elementos a un mercado o entorno lingüístico."],["VAL","Validación y control de calidad","Comprobación de consistencia global, cumplimiento de glosarios, requisitos lingüísticos y criterios de calidad de la traducción."]]},"ACA":{"name":"Trabajo académico","acts":[["DOC","Documentación y búsqueda de fuentes","Uso de IA para localizar, explorar, resumir o comprender información y fuentes relacionadas con el trabajo académico."],["IDE","Generación y desarrollo de ideas","Uso de IA para proponer, explorar o desarrollar temas, enfoques, preguntas y posibles soluciones."],["EST","Planificación y estructuración del trabajo","Uso de IA para planificar, organizar o estructurar el desarrollo y la presentación del trabajo."],["ANA","Análisis de información, datos o materiales","Uso de IA para analizar información, datos, textos, documentos u otros materiales relacionados con el trabajo."],["ARG","Elaboración de razonamientos y argumentación","Uso de IA para construir, desarrollar, contrastar o revisar razonamientos, explicaciones y argumentos."],["GEN","Generación de contenido académico","Uso de IA para producir textos, respuestas, soluciones u otros contenidos que puedan incorporarse al trabajo académico."],["REV","Revisión del contenido","Uso de IA para revisar la coherencia, precisión, completitud y organización del contenido académico."],["FOR","Revisión formal y de estilo","Uso de IA para mejorar aspectos lingüísticos, estilísticos y de presentación del trabajo, sin modificar sustancialmente su contenido."],["REF","Gestión de referencias y citas","Uso de IA para identificar, organizar, formatear o comprobar referencias bibliográficas y citas."],["VAL","Comprobación y validación de información","Uso de IA para comprobar afirmaciones, cálculos, resultados, soluciones o información incluida en el trabajo."]]}},"legacy":{"SCI":"SC","LIT":"LI","MUS":"MU","PHO":"PH","ILU":"IL","DES":"DS","AUD":"AU","SOF":"SW","TRA":"TR"},"levels":["No se utilizó IA","Se consultaron los resultados, pero no se incorporaron","Se creó algo propio usando los resultados como referencia","Se incorporaron los resultados transformados sustancialmente","Se incorporaron los resultados transformados parcialmente","Se incorporaron los resultados prácticamente sin cambios"],"scopeLabels":["Menos del 5%","Del 5% al 25%","Del 25% al 50%","Del 50% al 75%","Del 75% al 100%"],"cats":{"A":[0.0,10.0],"B":[10.0,25.0],"C":[25.0,50.0],"D":[50.0,75.0],"E":[75.0,90.0],"F":[90.0,100.0]},"catLabels":{"A":"Muy bajo","B":"Bajo","C":"Moderado","D":"Alto","E":"Muy alto","F":"Extremo"},"levelsAuthor":["No utilicé IA","Consulté los resultados, pero no los incorporé","Creé algo propio usando los resultados como referencia","Incorporé los resultados transformados sustancialmente","Incorporé los resultados transformados parcialmente","Incorporé los resultados prácticamente sin cambios"]};
+
+function normalize(s) {
+  s = String(s).toUpperCase().trim();
+  s = s.replace(/^((C[OÓ]DIGO|CODE)\s+)?ORIDE(\s+CODE)?[\s:]*/, "");
+  s = s.replace(/[\s·_—–.,;:\/+]+/g, "-");
+  return s.replace(/-+/g, "-").replace(/^-|-$/g, "");
+}
+
+/** Lee un código ORIDE. Devuelve {valid, error, r} con r = {type, ia, ev, acts:[[act, level, scope]], cat, keepIa1, declaredCat}. */
+function parseCode(raw) {
+  var code = normalize(raw);
+  var tok = code === "" ? [] : code.split("-");
+  if (tok.length < 2) return { valid: false, error: "Un código ORIDE empieza por el tipo de obra y el uso de IA, por ejemplo LI-IA0-EV0 o LI-IGB-EV1-GEN24." };
+  var type = tok.shift();
+  if (D.legacy[type]) type = D.legacy[type];
+  if (!D.types[type]) return { valid: false, error: "«" + type + "» no es un tipo de obra de ORIDE." };
+  var ia;
+  if (/^(IA[01]|IG[A-Z])$/.test(tok[0] || "")) ia = tok.shift();
+  else if (tok.length && /^([A-Z]{3}\d*|E?V[01]?)$/.test(tok[0])) ia = "IA1";
+  else ia = tok.shift();
+  var declaredCat = null;
+  var m = /^IG([A-Z])$/.exec(ia || "");
+  if (m) {
+    if (!D.cats[m[1]]) return { valid: false, error: "«" + ia + "» no es una categoría del Índice Global (van de IGA a IGF)." };
+    declaredCat = m[1];
+  } else if (ia !== "IA0" && ia !== "IA1") {
+    return { valid: false, error: "Después del tipo de obra va IA0, IGA…IGF o IA1." };
+  }
+  var isV = function (x) { return /^E?V[01]?$/.test(x); };
+  var ev = "";
+  if (tok.length && isV(tok[0])) ev = tok.shift();
+  else if (tok.length && isV(tok[tok.length - 1])) ev = tok.pop();
+  var evNum = ev === "" ? null : (ev.slice(-1) === "0" ? 0 : 1);
+  if (ia === "IA0") {
+    if (tok.length) return { valid: false, error: "Con IA0 (sin IA) no se indican actividades." };
+    return finish({ type: type, ia: 0, ev: evNum, acts: [], keepIa1: false, declaredCat: null });
+  }
+  var acts = {}, seen = [];
+  for (var i = 0; i < tok.length; i++) {
+    var t = tok[i];
+    if (isV(t)) return { valid: false, error: "Las evidencias van justo después del uso de IA." };
+    var am = /^([A-Z]{3})(\d*)$/.exec(t);
+    var known = am && D.types[type].acts.some(function (a) { return a[0] === am[1]; });
+    if (!known) return { valid: false, error: "«" + t.replace(/\d+$/, "") + "» no es una actividad de " + D.types[type].name + "." };
+    if (seen.indexOf(am[1]) >= 0) return { valid: false, error: "La actividad " + am[1] + " está repetida." };
+    if (am[2].length !== 2) return { valid: false, error: "En " + t + " faltan cifras: cada actividad lleva dos (grado y alcance), por ejemplo " + am[1] + "42." };
+    var level = +am[2][0], scope = +am[2][1];
+    if (level > 5) return { valid: false, error: "En " + t + ", el grado va de 0 a 5." };
+    if (level < 2 && scope !== 0) return { valid: false, error: "En " + t + ", con los grados 0 y 1 la segunda cifra es 0." };
+    if (scope > 4) return { valid: false, error: "En " + t + ", el alcance va de 0 a 4." };
+    seen.push(am[1]);
+    acts[am[1]] = [level, level >= 2 ? scope : null];
+  }
+  var ordered = D.types[type].acts.filter(function (a) { return acts[a[0]]; }).map(function (a) { return [a[0], acts[a[0]][0], acts[a[0]][1]]; });
+  var res = finish({ type: type, ia: 1, ev: evNum, acts: ordered, keepIa1: ia === "IA1" && ordered.length > 0, declaredCat: declaredCat });
+  if (declaredCat && ordered.length) {
+    if (!res.r.cat) return { valid: false, error: "IG" + declaredCat + " indica una categoría, pero las actividades no permiten calcular el índice (todas están a 0)." };
+    if (res.r.cat !== declaredCat) return { valid: false, error: "El código dice IG" + declaredCat + ", pero el índice calculado con sus actividades corresponde a IG" + res.r.cat + "." };
+  }
+  return res;
+}
+
+function finish(r) {
+  r.allZero = r.ia === 1 && r.acts.length > 0 && r.acts.every(function (a) { return a[1] === 0; });
+  r.ig = computeIndex(r);
+  r.cat = null; r.catSource = null;
+  if (r.ia === 1) {
+    if (r.ig.status === "ok") { r.cat = classify(r.ig.IG[0], r.ig.IG[1]); r.catSource = r.keepIa1 ? "derived" : "computed"; }
+    else if (!r.acts.length && r.declaredCat) { r.cat = r.declaredCat; r.catSource = "declared"; }
+  }
+  var term = r.ia === 0 ? "IA0" : (r.keepIa1 ? "IA1" : (r.cat ? "IG" + r.cat : "IA1"));
+  r.lines = [r.type + "-" + term + (r.ev === null ? "" : "-EV" + r.ev)];
+  if (r.acts.length) r.lines.push(r.acts.map(function (a) { return a[0] + a[1] + (a[1] >= 2 ? a[2] : 0); }).join("-"));
+  r.code = r.lines.join("-");
+  return { valid: true, r: r };
+}
+
+/** Índice Global: IG = G + (100 − G) · P, con intervalos (ig_from_result del motor PHP, sin la pregunta de proporción). */
+function computeIndex(r) {
+  var out = { status: "not_calculable", reason: null, G: null, P: null, IG: null, q: null, rows: [] };
+  if (r.ia === 0) { out.status = "ok"; out.G = [0, 0]; out.P = [0, 0]; out.IG = [0, 0]; return out; }
+  if (!r.acts.length) { out.reason = "no_acts"; return out; }
+  if (r.allZero) { out.reason = "all_zero"; return out; }
+  var W = D.weights[r.type];
+  var gen = [], auxLo = 0, auxHi = 0;
+  r.acts.forEach(function (a) {
+    var w = W[a[0]], f = D.factors[a[1]], S = a[2] === null ? [0, 0] : D.scope[a[2]];
+    var row = { act: a[0], role: w[0], level: a[1], scope: a[2], factor: f, S: S, weight: w[1], contrib: null };
+    if (w[0] === "gen") gen.push({ f: f, S: S });
+    else { row.contrib = [w[1] * f * S[0], w[1] * f * S[1]]; auxLo += row.contrib[0]; auxHi += row.contrib[1]; }
+    out.rows.push(row);
+  });
+  var G = [0, 0];
+  var used = gen.filter(function (g) { return g.f > 0; });
+  if (used.length) {
+    var fs = used.map(function (g) { return g.f; });
+    var q = [Math.min.apply(null, used.map(function (g) { return g.S[0]; })), Math.max.apply(null, used.map(function (g) { return g.S[1]; }))];
+    out.q = q;
+    G = [100 * q[0] * Math.min.apply(null, fs), 100 * q[1] * Math.max.apply(null, fs)];
+  }
+  var P = [Math.min(1, auxLo), Math.min(1, auxHi)];
+  var comb = function (g, p) { return Math.min(100, g + (100 - g) * p); };
+  out.status = "ok"; out.G = G; out.P = P; out.IG = [comb(G[0], P[0]), comb(G[1], P[1])];
+  return out;
+}
+
+/** Categoría por el punto medio, sin redondear: A si m ≤ 10; B si m ≤ 25; … ; F si m > 90. */
+function classify(lo, hi) {
+  var m = (lo + hi) / 2;
+  var cats = Object.keys(D.cats);
+  for (var i = 0; i < cats.length; i++) if (m <= D.cats[cats[i]][1]) return cats[i];
+  return "F";
+}
+// ===== ENGINE END =====
+
+// ===== Presentación: cinco escalas =====
+var NB = " ";
+var C = { ink: "#1c2526", muted: "#5b6b6c", dark: "#0e3b3c", darkest: "#0a2b2c", mid: "#2ba39a", light: "#a9d2cd", pale: "#eef6f5", line: "#c9d3d1", ok: "#1f6b45" };
+var FONT = "system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif";
+var WORD = { A: "muy bajo", B: "bajo", C: "moderado", D: "alto", E: "muy alto", F: "extremo" };
+var CATS = Object.keys(D.cats);
+
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function wrap(text, max) {
+  var lines = [], line = "";
+  text.split(" ").forEach(function (w) { if (line && (line + " " + w).length > max) { lines.push(line); line = w; } else line = (line + " " + w).trim(); });
+  if (line) lines.push(line);
+  return lines;
+}
+function t(x, y, txt, o) {
+  o = o || {};
+  return '<text x="' + x + '" y="' + y + '" font-size="' + (o.size || 14) + '"' + (o.weight ? ' font-weight="' + o.weight + '"' : "") + (o.anchor ? ' text-anchor="' + o.anchor + '"' : "") + (o.ls ? ' letter-spacing="' + o.ls + '"' : "") + ' fill="' + (o.fill || C.ink) + '">' + esc(txt) + "</text>";
+}
+function lines(x, y, arr, o, step) { return arr.map(function (l, i) { return t(x, y + i * (step || 19), l, o); }).join(""); }
+function tick(cx, cy, title) {
+  return '<g><title>' + esc(title) + '</title><circle cx="' + cx + '" cy="' + cy + '" r="10" fill="' + C.ok + '"/><path d="M ' + (cx - 5) + " " + cy + ' l 3.5 3.5 l 6.5 -7" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>';
+}
+function svgOpen(w, h, v) { return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="' + esc(v.aria) + '" font-family="' + FONT + '">'; }
+function header(v, x) { return t(x, 26, "DECLARACIÓN ORIDE", { size: 11, weight: 600, ls: 2, fill: C.head || "#154849" }) + t(x, 54, v.typeName, { size: 22, weight: 700, fill: C.darkest }); }
+/** Título en varias líneas si no cabe (max caracteres por línea), con el tick tras la última. Devuelve [svg, líneas]. */
+function titleBlock(x, y, v, size, max) {
+  var ls = wrap(v.title, max), lh = size + 4, s = "";
+  ls.forEach(function (l, i) { s += t(x, y + i * lh, l, { size: size, weight: 700, fill: C.darkest }); });
+  if (v.ev) {
+    var last = ls[ls.length - 1], tx = x + last.length * size * 0.56 + 16, ty = y + (ls.length - 1) * lh;
+    if (last.length + 3 > max) { tx = x + 10; ty += lh; ls.push(""); }
+    s += tick(tx, ty - 6, "Se puede mostrar el proceso de creación");
+  }
+  return [s, ls.length];
+}
+function titleWithTick(x, y, v, size) {
+  var s = t(x, y, v.title, { size: size || 17, weight: 700, fill: C.darkest });
+  if (v.ev) s += tick(x + v.title.length * (size || 17) * 0.56 + 18, y - 6, "Se puede mostrar el proceso de creación");
+  return s;
+}
+
+/** Lo que se muestra, igual para las cinco: título, texto, intervalo, punto medio, tramo y evidencias. */
+function makeView(r) {
+  var v = { typeName: D.types[r.type].name, ia: r.ia, ev: r.ev === 1, cat: null, lo: null, hi: null, mid: null, amount: "", title: "", body: "" };
+  if (r.ia === 0) {
+    v.title = "Obra 100" + NB + "% libre de IA"; v.body = "La persona autora declara que no utilizó IA."; v.amount = "0" + NB + "%";
+    v.lo = v.hi = v.mid = 0;
+  } else if (r.ig.status !== "ok") {
+    v.title = "Se utilizó IA"; v.body = "No se detalla en qué actividades, así que no se puede estimar cuánto aportó."; v.amount = "—";
+  } else {
+    v.cat = r.cat; v.lo = r.ig.IG[0]; v.hi = r.ig.IG[1]; v.mid = (v.lo + v.hi) / 2;
+    var lo = Math.round(v.lo), hi = Math.round(v.hi);
+    // Cifra principal: el punto medio, redondeado (el rango va en la explicación).
+    var m = Math.round(v.mid);
+    v.amount = hi === 0 ? "<1" + NB + "%" : m + NB + "%";
+    v.title = "Uso de IA " + WORD[r.cat];
+    v.body = "Se estima que la IA aportó " + (hi === 0 ? "menos del 1" + NB + "%" : lo === hi ? "alrededor del " + lo + NB + "%" : "entre el " + lo + NB + "% y el " + hi + NB + "%") + " de esta obra, según lo declarado.";
+  }
+  v.aria = "Declaración ORIDE, " + v.typeName + ". " + v.title + ". " + v.body + (v.ev ? " Se puede mostrar el proceso de creación." : "");
+  return v;
+}
+
+// Medidor semicircular con una paleta de colores
+// P: { mode: "alt" (dos colores alternos y el tramo de la obra en «cur») | "seq" (seis colores de menos a más),
+//      bands, cur, accent (margen de la estimación), ink (aguja y textos), head (rótulo) }
+function gauge(v, P) {
+  var save = {}; ["darkest", "mid", "head"].forEach(function (k) { save[k] = C[k]; });
+  C.darkest = P.ink; C.mid = P.accent; C.head = P.head;
+  var W = 400, H = 370, cx = 200, cy = 214, r = 124, sw = 28;
+  var pt = function (p, rr) { var a = Math.PI * (1 - p / 100); return [cx + rr * Math.cos(a), cy - rr * Math.sin(a)]; };
+  var arc = function (p0, p1, rr) { var a = pt(p0, rr), b = pt(p1, rr); return "M " + a[0].toFixed(2) + " " + a[1].toFixed(2) + " A " + rr + " " + rr + " 0 0 1 " + b[0].toFixed(2) + " " + b[1].toFixed(2); };
+  var s = svgOpen(W, H, v) + header(v, 16);
+  CATS.forEach(function (k, i) {
+    var here = v.cat === k, col, op = 1;
+    if (P.mode === "alt") col = here ? P.cur : P.bands[i % 2];
+    else col = P.bands[i]; // v8: sin aclarar los demás tramos
+    s += '<path d="' + arc(D.cats[k][0], D.cats[k][1], r) + '" fill="none" stroke="' + col + '" stroke-opacity="' + op + '" stroke-width="' + sw + '"/>';
+  });
+  CATS.forEach(function (k) { var a = pt(D.cats[k][1], r - sw / 2), b = pt(D.cats[k][1], r + sw / 2); s += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" stroke="#fff" stroke-width="2"/>'; });
+  // En los degradados, el tramo de la obra se marca con un borde (los demás conservan su color)
+  if (P.mode === "seq" && v.cat) {
+    var k = v.cat, a0 = pt(D.cats[k][0], r + sw / 2), a1 = pt(D.cats[k][1], r + sw / 2), b1 = pt(D.cats[k][1], r - sw / 2), b0 = pt(D.cats[k][0], r - sw / 2), ro = r + sw / 2, ri = r - sw / 2;
+    s += '<path d="M ' + a0[0] + ' ' + a0[1] + ' A ' + ro + ' ' + ro + ' 0 0 1 ' + a1[0] + ' ' + a1[1] + ' L ' + b1[0] + ' ' + b1[1] + ' A ' + ri + ' ' + ri + ' 0 0 0 ' + b0[0] + ' ' + b0[1] + ' Z" fill="none" stroke="' + P.ink + '" stroke-width="3.5" stroke-linejoin="round"/>';
+  }
+  [0, 25, 50, 75, 100].forEach(function (p) { var q = pt(p, r + sw / 2 + 12); s += t(q[0], q[1] + 4, p + (p === 100 ? NB + "%" : ""), { size: 11, anchor: p === 50 ? "middle" : (p < 50 ? "end" : "start"), fill: C.muted }); });
+  if (v.mid !== null) {
+    var n = pt(v.mid, r - sw / 2 - 6);
+    s += '<line x1="' + cx + '" y1="' + cy + '" x2="' + n[0].toFixed(2) + '" y2="' + n[1].toFixed(2) + '" stroke="' + P.ink + '" stroke-width="4" stroke-linecap="round"/>';
+    s += '<circle cx="' + cx + '" cy="' + cy + '" r="9" fill="' + P.ink + '"/>';
+  }
+  s += t(cx, cy + 44, v.amount, { size: 30, weight: 700, anchor: "middle", fill: P.ink });
+  var tw = v.title.length * 17 * 0.56 + (v.ev ? 28 : 0);
+  s += titleWithTick(cx - tw / 2, cy + 74, v);
+  s += lines(cx, cy + 98, wrap(v.body, 52), { size: 13, anchor: "middle", fill: C.ink }, 17);
+  Object.keys(save).forEach(function (k) { C[k] = save[k]; });
+  return s + "</svg>";
+}
+
+var PALETTES = [
+  { name: "Frío a cálido", why: "Del verde azulado al naranja: transmite «más IA» sin llegar al rojo de alarma. La aguja señala el punto medio de la estimación.", mode: "seq", bands: ["#2ba39a", "#7cc4a4", "#c9d98a", "#f2c14e", "#ef9a3c", "#e0692e"], accent: "#e0692e", ink: "#2d2a26", head: "#4a4540" },
+];
+
+// Las ocho cajas
+(function () {
+  var g = document.getElementById("grid");
+  PALETTES.forEach(function (P, i) {
+    var sec = document.createElement("section");
+    sec.className = "option";
+    sec.setAttribute("aria-labelledby", "p" + i);
+    sec.innerHTML = '<h2 id="p' + i + '">Medidor · ' + esc(P.name) + '</h2><p class="why">' + esc(P.why) + '</p>'
+      + '<div class="decl" style="border-color:' + P.ink + '"><div data-pal="' + i + '"></div><p class="code">Código ORIDE <code data-code-out></code></p></div>';
+    g.appendChild(sec);
+  });
+})();
+
+function show(raw) {
+  var res = parseCode(raw), err = document.getElementById("code-error"), input = document.getElementById("code-input");
+  if (!res.valid) { err.textContent = res.error; err.hidden = false; input.setAttribute("aria-invalid", "true"); return; }
+  err.hidden = true; input.removeAttribute("aria-invalid");
+  var v = makeView(res.r);
+  Array.prototype.forEach.call(document.querySelectorAll("[data-pal]"), function (el) { el.innerHTML = gauge(v, PALETTES[+el.getAttribute("data-pal")]); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-code-out]"), function (el) { el.textContent = res.r.lines.join(" "); });
+  Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-code") === raw)); });
+}
+document.getElementById("lab").addEventListener("submit", function (e) { e.preventDefault(); show(document.getElementById("code-input").value); });
+Array.prototype.forEach.call(document.querySelectorAll(".chip"), function (b) {
+  b.addEventListener("click", function () { document.getElementById("code-input").value = b.getAttribute("data-code"); show(b.getAttribute("data-code")); });
+});
+show(document.getElementById("code-input").value);
+</script>
+</body>
+</html>
